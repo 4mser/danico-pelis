@@ -166,17 +166,17 @@ export default function Home() {
         {displayedResults.length > 0 && (
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Resultados de búsqueda</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {displayedResults.map((movie) => (
                 <div 
                   key={movie.id} 
-                  className="bg-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-colors"
+                  className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-colors"
                 >
                   {movie.poster && (
                     <img 
                       src={movie.poster} 
                       alt={movie.title} 
-                      className="w-full h-fit object-cover rounded-lg mb-4"
+                      className="w-full h-96 object-cover rounded-lg mb-4"
                     />
                   )}
                   <h3 className="font-semibold mb-2 truncate">{movie.title}</h3>
