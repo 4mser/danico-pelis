@@ -259,7 +259,7 @@ export default function Home() {
           </div>
         )}
       </main>
-      <p className="text-center opacity-10 text-white/80">Me gustas 🥺</p>
+      <p className="text-center opacity-10 text-white/40">Me gustas 🥺</p>
     </div>
   );
 }
