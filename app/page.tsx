@@ -11,10 +11,10 @@ export default function Home() {
   const [selectedList, setSelectedList] = useState<ListType>("Dani");
   const [appMovies, setAppMovies] = useState<AppMovie[]>([]);
   const [loading, setLoading] = useState(false);
+  const [listLoading, setListLoading] = useState(false);
   const [error, setError] = useState("");
   const [showAllResults, setShowAllResults] = useState(false);
 
-  // Búsqueda automática con debounce
   const debouncedSearch = useCallback(
     debounce(async (searchQuery: string) => {
       if (!searchQuery.trim()) {
@@ -48,14 +48,14 @@ export default function Home() {
 
   const fetchMovies = async () => {
     try {
-      setLoading(true);
+      setListLoading(true);
       const movies = await getMoviesByList(selectedList);
       setAppMovies(movies);
       setError("");
     } catch (err) {
       setError("Error cargando películas");
     } finally {
-      setLoading(false);
+      setListLoading(false);
     }
   };
 
@@ -90,17 +90,14 @@ export default function Home() {
     }
   };
 
-  // Dividir resultados en primeros 3 y el resto
   const firstThreeResults = tmdbMovies.slice(0, 3);
   const remainingResults = tmdbMovies.slice(3);
   const displayedResults = showAllResults ? tmdbMovies : firstThreeResults;
-
 
   const handleClearSearch = () => {
     setQuery("");
     setTmdbMovies([]);
   };
-
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
@@ -119,37 +116,36 @@ export default function Home() {
               disabled={loading}
             />
             {query && !loading && (
-                <button
-                  onClick={handleClearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+              <button
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              )}
-            {loading && (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
+            {/* {loading && (
               <div className="absolute right-3 top-3">
                 <Spinner size="sm" />
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* Selector de lista */}
         <div className="flex gap-3 mb-8 justify-center">
           {(["Dani", "Nico", "Juntos"] as ListType[]).map((list) => (
             <button
@@ -167,7 +163,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Resultados de búsqueda */}
         {displayedResults.length > 0 && (
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Resultados de búsqueda</h2>
@@ -217,16 +212,19 @@ export default function Home() {
           </section>
         )}
 
-        {/* Lista de películas */}
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">{`Películas de ${selectedList}`}</h2>
+            <h2 className="text-2xl font-bold">{`Pelis para ${selectedList === 'Juntos' ? 'ver' :''} ${selectedList}`}</h2>
             <span className="bg-gray-800 px-3 py-1 rounded-full text-sm">
               {appMovies.length} {appMovies.length === 1 ? 'Película' : 'Películas'}
             </span>
           </div>
           
-          {appMovies.length === 0 ? (
+          {listLoading ? (
+            <div className="text-center py-12 w-full  flex justify-center">
+              <Spinner size="lg" />
+            </div>
+          ) : appMovies.length === 0 ? (
             <div className="text-center py-12 text-gray-400">
               No hay películas en esta lista
             </div>
@@ -273,7 +271,6 @@ export default function Home() {
           )}
         </section>
 
-        {/* Estado de carga y errores */}
         {loading && (
           <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center">
             <Spinner size="lg" />
