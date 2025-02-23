@@ -176,7 +176,7 @@ export default function Home() {
                     <img 
                       src={movie.poster} 
                       alt={movie.title} 
-                      className="w-full h-48 object-cover rounded-lg mb-4"
+                      className="w-full h-fit object-cover rounded-lg mb-4"
                     />
                   )}
                   <h3 className="font-semibold mb-2 truncate">{movie.title}</h3>
@@ -185,7 +185,7 @@ export default function Home() {
                       <button
                         key={list}
                         onClick={() => handleAddMovie(movie, list)}
-                        className="text-sm px-3 py-1 rounded-full bg-gray-700 hover:bg-gray-600 
+                        className="text-md px-3 py-1  rounded-full bg-gray-700 hover:bg-gray-600 
                           transition-colors flex items-center gap-1"
                         disabled={loading}
                       >
