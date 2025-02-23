@@ -95,6 +95,13 @@ export default function Home() {
   const remainingResults = tmdbMovies.slice(3);
   const displayedResults = showAllResults ? tmdbMovies : firstThreeResults;
 
+
+  const handleClearSearch = () => {
+    setQuery("");
+    setTmdbMovies([]);
+  };
+
+
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       <header className="bg-gradient-to-b from-gray-800 to-transparent py-6">
@@ -111,6 +118,27 @@ export default function Home() {
               placeholder="🔍 Buscar pelis..."
               disabled={loading}
             />
+            {query && !loading && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
             {loading && (
               <div className="absolute right-3 top-3">
                 <Spinner size="sm" />
