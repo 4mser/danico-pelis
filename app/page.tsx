@@ -1,9 +1,10 @@
 'use client'
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { searchMovies, addMovieToList, getMoviesByList, toggleWatched } from "../services/api";
 import { TMDBMovie, AppMovie, ListType } from "../types";
 import { Spinner } from "./spinner";
 import { debounce } from "lodash";
+import Image from "next/image";
 
 export default function Home() {
   const [query, setQuery] = useState<string>("");
@@ -14,6 +15,15 @@ export default function Home() {
   const [listLoading, setListLoading] = useState(false);
   const [error, setError] = useState("");
   const [showAllResults, setShowAllResults] = useState(false);
+  const [showRandomModal, setShowRandomModal] = useState(false);
+  const [selectedRandomMovie, setSelectedRandomMovie] = useState<AppMovie | null>(null);
+  const [isAnimating, setIsAnimating] = useState(true);
+
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number>(0);
+  const contentWidthRef = useRef(0);
+  const itemWidthRef = useRef(0);
 
   const debouncedSearch = useCallback(
     debounce(async (searchQuery: string) => {
@@ -21,7 +31,7 @@ export default function Home() {
         setTmdbMovies([]);
         return;
       }
-      
+
       try {
         setLoading(true);
         const results = await searchMovies(searchQuery);
@@ -45,6 +55,90 @@ export default function Home() {
   useEffect(() => {
     fetchMovies();
   }, [selectedList]);
+
+  useEffect(() => {
+    if (showRandomModal && carouselRef.current) {
+      const carousel = carouselRef.current;
+      contentWidthRef.current = carousel.scrollWidth;
+
+      const firstItem = carousel.firstElementChild as HTMLElement;
+      if (firstItem) {
+        const style = window.getComputedStyle(firstItem);
+        itemWidthRef.current = firstItem.offsetWidth + 
+          parseInt(style.marginLeft) + 
+          parseInt(style.marginRight);
+      }
+    }
+  }, [showRandomModal, appMovies]);
+
+  const handleRandomSelection = useCallback(() => {
+    if (!itemWidthRef.current || selectedRandomMovie) return;
+
+    setIsAnimating(false);
+    const randomIndex = Math.floor(Math.random() * appMovies.length);
+    const targetMovie = appMovies[randomIndex];
+    const targetPosition = itemWidthRef.current * randomIndex;
+
+    const startTime = performance.now();
+    const startPosition = parseFloat(
+      carouselRef.current?.style.transform?.split('translateX(-')[1] || '0'
+    );
+
+    const animateDeceleration = (currentTime: number) => {
+      if (!startTimeRef.current) startTimeRef.current = currentTime;
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / 1000, 1);
+
+      const newPosition = startPosition + (targetPosition - startPosition) * progress;
+
+      if (carouselRef.current) {
+        carouselRef.current.style.transform = `translateX(-${newPosition}px)`;
+      }
+
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(animateDeceleration);
+      } else {
+        setSelectedRandomMovie(targetMovie);
+      }
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animateDeceleration);
+  }, [appMovies, selectedRandomMovie]);
+
+  useEffect(() => {
+    if (!showRandomModal || !carouselRef.current || selectedRandomMovie) return;
+
+    const carousel = carouselRef.current;
+    let position = 0;
+    let lastTime: number;
+    const initialSpeed = 0.8;
+
+    const animate = (timestamp: number) => {
+      if (!lastTime) lastTime = timestamp;
+      const deltaTime = timestamp - lastTime;
+
+      position += initialSpeed * deltaTime;
+      if (position >= contentWidthRef.current) position = 0;
+
+      carousel.style.transform = `translateX(-${position}px)`;
+      lastTime = timestamp;
+
+      if (isAnimating) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      }
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    const timeoutId = setTimeout(handleRandomSelection, 5000);
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      clearTimeout(timeoutId);
+    };
+  }, [showRandomModal, isAnimating, selectedRandomMovie, handleRandomSelection]);
 
   const fetchMovies = async () => {
     try {
@@ -100,11 +194,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      <header className="bg-gradient-to-b from-gray-800 to-transparent py-6">
+    <div className="bg-black grid place-items-center min-h-[100dvh]">
+      {/* <header className="bg-gradient-to-b from-gray-800 to-transparent py-6">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-center mb-6">Lista de pelis que tenemos que ver jeje 😼 🎬</h1>
-          
+
           <div className="max-w-2xl mx-auto relative">
             <input
               type="text"
@@ -136,11 +230,11 @@ export default function Home() {
                 </svg>
               </button>
             )}
-            {/* {loading && (
+            {loading && (
               <div className="absolute right-3 top-3">
                 <Spinner size="sm" />
               </div>
-            )} */}
+            )}
           </div>
         </div>
       </header>
@@ -162,6 +256,18 @@ export default function Home() {
             </button>
           ))}
         </div>
+
+        {appMovies.length > 1 && !listLoading && (
+          <div className="mb-6 text-center">
+            <button
+              onClick={() => setShowRandomModal(true)}
+              className="bg-gradient-to-r from-pink-500 to-purple-600 px-6 py-3 rounded-full
+                hover:from-pink-600 hover:to-purple-700 transition-all duration-300"
+            >
+              🎲 Seleccionar una al azar
+            </button>
+          </div>
+        )}
 
         {displayedResults.length > 0 && (
           <section className="mb-12">
@@ -214,12 +320,12 @@ export default function Home() {
 
         <section>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">{`Pelis para ${selectedList === 'Juntos' ? 'ver' :''} ${selectedList}`}</h2>
+            <h2 className="text-2xl font-bold">{`Pelis para ${selectedList === 'Juntos' ? 'ver' : ''} ${selectedList}`}</h2>
             <span className="bg-gray-800 px-3 py-1 rounded-full text-sm">
               {appMovies.length} {appMovies.length === 1 ? 'Película' : 'Películas'}
             </span>
           </div>
-          
+
           {listLoading ? (
             <div className="text-center py-12 w-full  flex justify-center">
               <Spinner size="lg" />
@@ -271,12 +377,86 @@ export default function Home() {
           )}
         </section>
 
+        {showRandomModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="relative w-full max-w-4xl p-6">
+              <button
+                onClick={() => {
+                  setShowRandomModal(false);
+                  setSelectedRandomMovie(null);
+                  setIsAnimating(true);
+                }}
+                className="absolute top-4 right-4 text-white hover:text-pink-500 z-50 text-3xl"
+              >
+                &times;
+              </button>
+
+              <div className="overflow-hidden relative h-96 flex items-center">
+                <div
+                  ref={carouselRef}
+                  className="flex w-max transition-transform duration-1000 ease-out items-center"
+                  style={{ transform: 'translateX(0)' }}
+                >
+                  {appMovies.map((movie) => (
+                    <div
+                      key={movie._id}
+                      className={`w-64 h-96 flex-shrink-0 relative cursor-pointer mx-2 overflow-hidden transition-all duration-300
+                        ${selectedRandomMovie?._id === movie._id ? 'scale-110' : 'scale-100'}`}
+                    >
+                      <img
+                        src={movie.poster || "/placeholder.jpg"}
+                        alt={movie.title}
+                        className="h-full w-auto object-contain rounded-xl shadow-2xl mx-auto"
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-6">
+                        <h3 className="text-3xl font-bold text-white">{movie.title}</h3>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {selectedRandomMovie && (
+                <div className="mt-8 text-center space-y-4">
+                  <div className="animate-bounce">
+                    <p className="text-2xl font-bold text-white">
+                      🎉 ¡Vamos a ver: {selectedRandomMovie.title}!
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowRandomModal(false);
+                      setSelectedRandomMovie(null);
+                      setIsAnimating(true);
+                    }}
+                    className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg text-white flex items-center gap-2 mx-auto transition-colors"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Cerrar
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {loading && (
           <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center">
             <Spinner size="lg" />
           </div>
         )}
-        
+
         {error && (
           <div className="fixed bottom-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg
             animate-fade-in-up">
@@ -284,7 +464,14 @@ export default function Home() {
           </div>
         )}
       </main>
-      {/* <p className="text-center opacity-10 text-white/40">Me gustas 🥺</p> */}
+      <p className="text-center opacity-10 text-white/40">Me gustas 🥺</p> */}
+      <Image 
+        src='/maybe.jpg'
+        alt='maybe in another life'
+        width={800}
+        height={800}
+        className="w-full h-fit"
+      />
     </div>
   );
 }
