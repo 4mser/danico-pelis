@@ -1,5 +1,6 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { searchMovies, addMovieToList, getMoviesByList, toggleWatched } from "../services/api";
 import { TMDBMovie, AppMovie, ListType } from "../types";
 import { Spinner } from "./spinner";
@@ -9,7 +10,7 @@ import Image from "next/image";
 export default function Home() {
   const [query, setQuery] = useState<string>("");
   const [tmdbMovies, setTmdbMovies] = useState<TMDBMovie[]>([]);
-  const [selectedList, setSelectedList] = useState<ListType>("Dani");
+  const [selectedList, setSelectedList] = useState<ListType>("Maca");
   const [appMovies, setAppMovies] = useState<AppMovie[]>([]);
   const [loading, setLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);
@@ -17,13 +18,8 @@ export default function Home() {
   const [showAllResults, setShowAllResults] = useState(false);
   const [showRandomModal, setShowRandomModal] = useState(false);
   const [selectedRandomMovie, setSelectedRandomMovie] = useState<AppMovie | null>(null);
-  const [isAnimating, setIsAnimating] = useState(true);
-
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const animationFrameRef = useRef<number | null>(null);
-  const startTimeRef = useRef<number>(0);
-  const contentWidthRef = useRef(0);
-  const itemWidthRef = useRef(0);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionProgress, setSelectionProgress] = useState(0);
 
   const debouncedSearch = useCallback(
     debounce(async (searchQuery: string) => {
@@ -55,90 +51,6 @@ export default function Home() {
   useEffect(() => {
     fetchMovies();
   }, [selectedList]);
-
-  useEffect(() => {
-    if (showRandomModal && carouselRef.current) {
-      const carousel = carouselRef.current;
-      contentWidthRef.current = carousel.scrollWidth;
-
-      const firstItem = carousel.firstElementChild as HTMLElement;
-      if (firstItem) {
-        const style = window.getComputedStyle(firstItem);
-        itemWidthRef.current = firstItem.offsetWidth + 
-          parseInt(style.marginLeft) + 
-          parseInt(style.marginRight);
-      }
-    }
-  }, [showRandomModal, appMovies]);
-
-  const handleRandomSelection = useCallback(() => {
-    if (!itemWidthRef.current || selectedRandomMovie) return;
-
-    setIsAnimating(false);
-    const randomIndex = Math.floor(Math.random() * appMovies.length);
-    const targetMovie = appMovies[randomIndex];
-    const targetPosition = itemWidthRef.current * randomIndex;
-
-    const startTime = performance.now();
-    const startPosition = parseFloat(
-      carouselRef.current?.style.transform?.split('translateX(-')[1] || '0'
-    );
-
-    const animateDeceleration = (currentTime: number) => {
-      if (!startTimeRef.current) startTimeRef.current = currentTime;
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / 1000, 1);
-
-      const newPosition = startPosition + (targetPosition - startPosition) * progress;
-
-      if (carouselRef.current) {
-        carouselRef.current.style.transform = `translateX(-${newPosition}px)`;
-      }
-
-      if (progress < 1) {
-        animationFrameRef.current = requestAnimationFrame(animateDeceleration);
-      } else {
-        setSelectedRandomMovie(targetMovie);
-      }
-    };
-
-    animationFrameRef.current = requestAnimationFrame(animateDeceleration);
-  }, [appMovies, selectedRandomMovie]);
-
-  useEffect(() => {
-    if (!showRandomModal || !carouselRef.current || selectedRandomMovie) return;
-
-    const carousel = carouselRef.current;
-    let position = 0;
-    let lastTime: number;
-    const initialSpeed = 0.8;
-
-    const animate = (timestamp: number) => {
-      if (!lastTime) lastTime = timestamp;
-      const deltaTime = timestamp - lastTime;
-
-      position += initialSpeed * deltaTime;
-      if (position >= contentWidthRef.current) position = 0;
-
-      carousel.style.transform = `translateX(-${position}px)`;
-      lastTime = timestamp;
-
-      if (isAnimating) {
-        animationFrameRef.current = requestAnimationFrame(animate);
-      }
-    };
-
-    animationFrameRef.current = requestAnimationFrame(animate);
-
-    const timeoutId = setTimeout(handleRandomSelection, 5000);
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      clearTimeout(timeoutId);
-    };
-  }, [showRandomModal, isAnimating, selectedRandomMovie, handleRandomSelection]);
 
   const fetchMovies = async () => {
     try {
@@ -184,6 +96,40 @@ export default function Home() {
     }
   };
 
+  const handleRandomSelection = () => {
+    if (appMovies.length === 0) return;
+    
+    setShowRandomModal(true);
+    setIsSelecting(true);
+    setSelectedRandomMovie(null);
+    setSelectionProgress(0);
+    
+    // Animación de selección
+    const duration = 3000; // 3 segundos
+    const startTime = Date.now();
+    const interval = 100; // ms entre cambios
+    
+    const selectionInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      setSelectionProgress(progress);
+      
+      // Cambiar película durante la animación
+      const randomIndex = Math.floor(Math.random() * appMovies.length);
+      setSelectedRandomMovie(appMovies[randomIndex]);
+      
+      // Finalizar animación
+      if (progress >= 1) {
+        clearInterval(selectionInterval);
+        setIsSelecting(false);
+        
+        // Selección final
+        const finalIndex = Math.floor(Math.random() * appMovies.length);
+        setSelectedRandomMovie(appMovies[finalIndex]);
+      }
+    }, interval);
+  };
+
   const firstThreeResults = tmdbMovies.slice(0, 3);
   const remainingResults = tmdbMovies.slice(3);
   const displayedResults = showAllResults ? tmdbMovies : firstThreeResults;
@@ -194,8 +140,8 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-black grid place-items-center min-h-[100dvh]">
-      {/* <header className="bg-gradient-to-b from-gray-800 to-transparent py-6">
+    <div className="bg-black min-h-[100dvh]">
+      <header className="bg-gradient-to-b from-gray-800 to-transparent py-6">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-center mb-6">Lista de pelis que tenemos que ver jeje 😼 🎬</h1>
 
@@ -241,7 +187,7 @@ export default function Home() {
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex gap-3 mb-8 justify-center">
-          {(["Dani", "Nico", "Juntos"] as ListType[]).map((list) => (
+          {(["Maca", "Nico", "Juntos"] as ListType[]).map((list) => (
             <button
               key={list}
               onClick={() => setSelectedList(list)}
@@ -250,21 +196,23 @@ export default function Home() {
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white" 
                   : "bg-gray-800 hover:bg-gray-700 text-gray-300"}`}
             >
-              {list === 'Dani' && 'Dani 🖤'}
-              {list === 'Nico' && 'Nico 👹'}
-              {list === 'Juntos' && 'Ver Juntos 😈 🔞'}
+              {list === 'Maca' && 'Maca 🦇'}
+              {list === 'Nico' && 'Nico 🥵'}
+              {list === 'Juntos' && 'Ver Juntos ✨'}
             </button>
           ))}
         </div>
 
         {appMovies.length > 1 && !listLoading && (
-          <div className="mb-6 text-center">
+          <div className="text-center">
             <button
-              onClick={() => setShowRandomModal(true)}
-              className="bg-gradient-to-r from-pink-500 to-purple-600 px-6 py-3 rounded-full
-                hover:from-pink-600 hover:to-purple-700 transition-all duration-300"
+              onClick={handleRandomSelection}
+              className="fixed animate-pulse bottom-4 right-4 w-14 h-14 flex items-center justify-center bg-gradient-to-r from-pink-500 to-purple-600 rounded-full
+                hover:from-pink-600 hover:to-purple-700 transition-all duration-300 p-[2px]"
             >
-              🎲 Seleccionar una al azar
+              <span className="w-full h-full flex items-center justify-center rounded-full text-3xl bg-black/70">
+                🎲
+              </span> 
             </button>
           </div>
         )}
@@ -287,11 +235,11 @@ export default function Home() {
                   )}
                   <h3 className="font-semibold mb-2 truncate">{movie.title}</h3>
                   <div className="flex gap-2 flex-wrap">
-                    {(["Dani", "Nico", "Juntos"] as ListType[]).map((list) => (
+                    {(["Maca", "Nico", "Juntos"] as ListType[]).map((list) => (
                       <button
                         key={list}
                         onClick={() => handleAddMovie(movie, list)}
-                        className="text-md px-3 py-1  rounded-full bg-gray-700 hover:bg-gray-600 
+                        className="text-md px-3 py-1 rounded-full bg-gray-700 hover:bg-gray-600 
                           transition-colors flex items-center gap-1"
                         disabled={loading}
                       >
@@ -327,7 +275,7 @@ export default function Home() {
           </div>
 
           {listLoading ? (
-            <div className="text-center py-12 w-full  flex justify-center">
+            <div className="text-center py-12 w-full flex justify-center">
               <Spinner size="lg" />
             </div>
           ) : appMovies.length === 0 ? (
@@ -343,16 +291,16 @@ export default function Home() {
                     hover:bg-gray-750 transition-colors"
                 >
                   {movie.poster ? (
-                  <img 
-                    src={movie.poster} 
-                    alt={movie.title} 
-                    className="w-20 h-28 object-cover rounded-lg"
-                  />
-                ) : (
-                  <div className="w-20 h-28 bg-gray-700 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-400 text-xs text-center">Sin imagen</span>
-                  </div>
-                )}
+                    <img 
+                      src={movie.poster} 
+                      alt={movie.title} 
+                      className="w-20 h-28 object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="w-20 h-28 bg-gray-700 rounded-lg flex items-center justify-center">
+                      <span className="text-gray-400 text-xs text-center">Sin imagen</span>
+                    </div>
+                  )}
                   <div className="flex-1 flex items-center gap-4">
                     <div className="flex-1">
                       <h3 className={`font-medium ${movie.watched ? 'text-gray-500 line-through' : ''}`}>
@@ -377,79 +325,86 @@ export default function Home() {
           )}
         </section>
 
-        {showRandomModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="relative w-full max-w-4xl p-6">
-              <button
-                onClick={() => {
-                  setShowRandomModal(false);
-                  setSelectedRandomMovie(null);
-                  setIsAnimating(true);
-                }}
-                className="absolute top-4 right-4 text-white hover:text-pink-500 z-50 text-3xl"
-              >
-                &times;
-              </button>
-
-              <div className="overflow-hidden relative h-96 flex items-center">
-                <div
-                  ref={carouselRef}
-                  className="flex w-max transition-transform duration-1000 ease-out items-center"
-                  style={{ transform: 'translateX(0)' }}
+        {/* Modal de selección aleatoria (NUEVA VERSIÓN) */}
+        <AnimatePresence>
+          {showRandomModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50"
+            >
+              <div className="relative w-full max-w-2xl p-6">
+                <button
+                  onClick={() => {
+                    setShowRandomModal(false);
+                    setSelectedRandomMovie(null);
+                  }}
+                  className="fixed top-4 right-4 text-white hover:text-pink-500 z-50 text-6xl"
                 >
-                  {appMovies.map((movie) => (
-                    <div
-                      key={movie._id}
-                      className={`w-64 h-96 flex-shrink-0 relative cursor-pointer mx-2 overflow-hidden transition-all duration-300
-                        ${selectedRandomMovie?._id === movie._id ? 'scale-110' : 'scale-100'}`}
-                    >
-                      <img
-                        src={movie.poster || "/placeholder.jpg"}
-                        alt={movie.title}
-                        className="h-full w-auto object-contain rounded-xl shadow-2xl mx-auto"
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-6">
-                        <h3 className="text-3xl font-bold text-white">{movie.title}</h3>
-                      </div>
+                  &times;
+                </button>
+
+                <div className=" rounded-xl overflow-hidden ">
+                  <div className="p-6 text-center">
+                    <h2 className="text-2xl font-bold mb-6">
+                      {isSelecting ? "Seleccionando..." : "¡Película seleccionada!"}
+                    </h2>
+                    
+                    <div className="min-h-[300px] flex items-center justify-center">
+                      {selectedRandomMovie ? (
+                        <motion.div
+                          initial={{ scale: 0.9, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ type: "spring" }}
+                          className="relative"
+                        >
+                          <img
+                            src={selectedRandomMovie.poster || "/placeholder.jpg"}
+                            alt={selectedRandomMovie.title}
+                            className="mx-auto max-h-64 rounded-lg shadow-xl"
+                          />
+                        
+                        </motion.div>
+                      ) : (
+                        <Spinner size="lg" />
+                      )}
                     </div>
-                  ))}
+
+                    {/* Barra de progreso */}
+                    {isSelecting && (
+                      <motion.div 
+                        className="mt-6 bg-gray-800 rounded-full h-2 overflow-hidden"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-pink-500 to-purple-600"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${selectionProgress * 100}%` }}
+                          transition={{ duration: 3 }}
+                        />
+                      </motion.div>
+                    )}
+
+                    {/* Título de la película */}
+                    <motion.h3
+                      className="text-xl font-bold mt-6"
+                      animate={{
+                        opacity: isSelecting ? 0.7 : 1,
+                        y: isSelecting ? 10 : 0
+                      }}
+                    >
+                      {selectedRandomMovie?.title || ""} 😈
+                    </motion.h3>
+
+                   
+                  </div>
                 </div>
               </div>
-
-              {selectedRandomMovie && (
-                <div className="mt-8 text-center space-y-4">
-                  <div className="animate-bounce">
-                    <p className="text-2xl font-bold text-white">
-                      🎉 ¡Vamos a ver: {selectedRandomMovie.title}!
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowRandomModal(false);
-                      setSelectedRandomMovie(null);
-                      setIsAnimating(true);
-                    }}
-                    className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg text-white flex items-center gap-2 mx-auto transition-colors"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Cerrar
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {loading && (
           <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center">
@@ -458,20 +413,11 @@ export default function Home() {
         )}
 
         {error && (
-          <div className="fixed bottom-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg
-            animate-fade-in-up">
+          <div className="fixed bottom-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg animate-fade-in-up">
             ⚠️ {error}
           </div>
         )}
       </main>
-      <p className="text-center opacity-10 text-white/40">Me gustas 🥺</p> */}
-      <Image 
-        src='/maybe.jpg'
-        alt='maybe in another life'
-        width={800}
-        height={800}
-        className="w-full h-fit"
-      />
     </div>
   );
 }
