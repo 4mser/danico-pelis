@@ -45,3 +45,12 @@ export const toggleWatched = async (id: string, watched: boolean) => {
     throw new Error("Error al actualizar estado");
   }
 };
+
+export const deleteMovie = async (id: string) => {
+  try {
+    await axios.delete(`${API_URL}/movies/${id}`);
+  } catch (error) {
+    console.error("Error deleting movie:", error);
+    throw new Error("Error al eliminar película");
+  }
+};
