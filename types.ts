@@ -1,4 +1,4 @@
-export type ListType = 'Maca' | 'Nico' | 'Juntos';
+export type ListType = 'Barbara' | 'Nico' | 'Juntos';
 
 export interface TMDBMovie {
   id: number;

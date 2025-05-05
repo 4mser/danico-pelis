@@ -10,7 +10,7 @@ import Image from "next/image";
 export default function Home() {
   const [query, setQuery] = useState<string>("");
   const [tmdbMovies, setTmdbMovies] = useState<TMDBMovie[]>([]);
-  const [selectedList, setSelectedList] = useState<ListType>("Maca");
+  const [selectedList, setSelectedList] = useState<ListType>("Barbara");
   const [appMovies, setAppMovies] = useState<AppMovie[]>([]);
   const [loading, setLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);
@@ -204,7 +204,7 @@ export default function Home() {
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex gap-3 mb-8 justify-center">
-          {(["Maca", "Nico", "Juntos"] as ListType[]).map((list) => (
+          {(["Barbara", "Nico", "Juntos"] as ListType[]).map((list) => (
             <button
               key={list}
               onClick={() => setSelectedList(list)}
@@ -213,9 +213,9 @@ export default function Home() {
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white" 
                   : "bg-gray-800 hover:bg-gray-700 text-gray-300"}`}
             >
-              {list === 'Maca' && 'Maca 🦇'}
+              {list === 'Barbara' && 'Barbara 😻'}
               {list === 'Nico' && 'Nico 🥵'}
-              {list === 'Juntos' && 'Ver Juntos ✨'}
+              {list === 'Juntos' && 'Ver Juntos 😈'}
             </button>
           ))}
         </div>
@@ -252,7 +252,7 @@ export default function Home() {
                   )}
                   <h3 className="font-semibold mb-2 truncate">{movie.title}</h3>
                   <div className="flex gap-2 flex-wrap">
-                    {(["Maca", "Nico", "Juntos"] as ListType[]).map((list) => (
+                    {(["Barbara", "Nico", "Juntos"] as ListType[]).map((list) => (
                       <button
                         key={list}
                         onClick={() => handleAddMovie(movie, list)}
