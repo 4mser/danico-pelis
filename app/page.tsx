@@ -20,8 +20,8 @@ export default function Home() {
   const [selectedRandomMovie, setSelectedRandomMovie] = useState<AppMovie | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionProgress, setSelectionProgress] = useState(0);
-  const [catPressCount, setCatPressCount] = useState(0);
-  const [showCatModal, setShowCatModal] = useState(false);
+  const [barbaraPressCount, setBarbaraPressCount] = useState(0);
+  const [showLoveModal, setShowLoveModal] = useState(false);
 
   const debouncedSearch = useCallback(
     debounce(async (searchQuery: string) => {
@@ -54,24 +54,22 @@ export default function Home() {
     fetchMovies();
   }, [selectedList]);
 
-  const handleCatPress = () => {
-    const newCount = catPressCount + 1;
-    setCatPressCount(newCount);
+  const handleBarbaraPress = () => {
+    const newCount = barbaraPressCount + 1;
+    setBarbaraPressCount(newCount);
     
     if (newCount >= 5) {
-      setShowCatModal(true);
-      setCatPressCount(0);
+      setShowLoveModal(true);
+      setBarbaraPressCount(0);
       
-      // Ocultar el modal después de 3 segundos
       setTimeout(() => {
-        setShowCatModal(false);
+        setShowLoveModal(false);
       }, 3000);
     }
     
-    // Resetear el contador si no se presiona dentro de 2 segundos
     setTimeout(() => {
-      if (catPressCount > 0 && catPressCount < 5) {
-        setCatPressCount(0);
+      if (barbaraPressCount > 0 && barbaraPressCount < 5) {
+        setBarbaraPressCount(0);
       }
     }, 2000);
   };
@@ -145,26 +143,22 @@ export default function Home() {
     setSelectedRandomMovie(null);
     setSelectionProgress(0);
     
-    // Animación de selección
-    const duration = 3000; // 3 segundos
+    const duration = 3000;
     const startTime = Date.now();
-    const interval = 100; // ms entre cambios
+    const interval = 100;
     
     const selectionInterval = setInterval(() => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
       setSelectionProgress(progress);
       
-      // Cambiar película durante la animación
       const randomIndex = Math.floor(Math.random() * appMovies.length);
       setSelectedRandomMovie(appMovies[randomIndex]);
       
-      // Finalizar animación
       if (progress >= 1) {
         clearInterval(selectionInterval);
         setIsSelecting(false);
         
-        // Selección final
         const finalIndex = Math.floor(Math.random() * appMovies.length);
         setSelectedRandomMovie(appMovies[finalIndex]);
       }
@@ -185,15 +179,7 @@ export default function Home() {
       <header className="bg-gradient-to-b from-gray-800 to-transparent py-6">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-center mb-6">
-            Lista de pelis que tenemos que ver jeje 
-            <span 
-              onClick={handleCatPress} 
-              className="cursor-pointer hover:scale-110 transition-transform inline-block"
-              title="Presióname 10 veces 😼"
-            >
-              😻
-            </span>
-            🎬
+            Lista de pelis que tenemos que ver jeje 😻🎬
           </h1>
 
           <div className="max-w-2xl mx-auto relative">
@@ -241,7 +227,12 @@ export default function Home() {
           {(["Barbara", "Nico", "Juntos"] as ListType[]).map((list) => (
             <button
               key={list}
-              onClick={() => setSelectedList(list)}
+              onClick={() => {
+                setSelectedList(list);
+                if (list === 'Barbara') {
+                  handleBarbaraPress();
+                }
+              }}
               className={`px-4 py-2 text-sm rounded-full transition-colors duration-200
                 ${selectedList === list 
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white" 
@@ -425,14 +416,12 @@ export default function Home() {
                             alt={selectedRandomMovie.title}
                             className="mx-auto max-h-64 rounded-lg shadow-xl"
                           />
-                        
                         </motion.div>
                       ) : (
                         <Spinner size="lg" />
                       )}
                     </div>
 
-                    {/* Barra de progreso */}
                     {isSelecting && (
                       <motion.div 
                         className="mt-6 bg-gray-800 rounded-full h-2 overflow-hidden"
@@ -448,7 +437,6 @@ export default function Home() {
                       </motion.div>
                     )}
 
-                    {/* Título de la película */}
                     <motion.h3
                       className="text-xl font-bold mt-6"
                       animate={{
@@ -458,7 +446,6 @@ export default function Home() {
                     >
                       {selectedRandomMovie?.title || ""} 😈
                     </motion.h3>
-
                   </div>
                 </div>
               </div>
@@ -466,9 +453,9 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* Modal del gato */}
+        {/* Modal de amor */}
         <AnimatePresence>
-          {showCatModal && (
+          {showLoveModal && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
