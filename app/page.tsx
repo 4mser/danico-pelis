@@ -179,7 +179,7 @@ export default function Home() {
       <header className="bg-gradient-to-b from-gray-800 to-transparent py-6">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-center mb-6">
-            Lista de pelis que tenemos que ver jeje 😻🎬
+            Lista de pelis que tenemos que ver jeje 😼🎬
           </h1>
 
           <div className="max-w-2xl mx-auto relative">
