@@ -22,6 +22,8 @@ export default function Home() {
   const [selectionProgress, setSelectionProgress] = useState(0);
   const [barbaraPressCount, setBarbaraPressCount] = useState(0);
   const [showLoveModal, setShowLoveModal] = useState(false);
+  const [nicoPressCount, setNicoPressCount] = useState(0);
+  const [showCouponModal, setShowCouponModal] = useState(false);
 
   const debouncedSearch = useCallback(
     debounce(async (searchQuery: string) => {
@@ -70,6 +72,26 @@ export default function Home() {
     setTimeout(() => {
       if (barbaraPressCount > 0 && barbaraPressCount < 5) {
         setBarbaraPressCount(0);
+      }
+    }, 2000);
+  };
+
+  const handleNicoPress = () => {
+    const newCount = nicoPressCount + 1;
+    setNicoPressCount(newCount);
+    
+    if (newCount >= 5) {
+      setShowCouponModal(true);
+      setNicoPressCount(0);
+      
+      setTimeout(() => {
+        setShowCouponModal(false);
+      }, 3000);
+    }
+    
+    setTimeout(() => {
+      if (nicoPressCount > 0 && nicoPressCount < 5) {
+        setNicoPressCount(0);
       }
     }, 2000);
   };
@@ -231,6 +253,9 @@ export default function Home() {
                 setSelectedList(list);
                 if (list === 'Barbara') {
                   handleBarbaraPress();
+                }
+                if (list === 'Nico') {
+                  handleNicoPress();
                 }
               }}
               className={`px-4 py-2 text-sm rounded-full transition-colors duration-200
@@ -453,7 +478,7 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* Modal de amor */}
+        {/* Modal de amor de Barbara */}
         <AnimatePresence>
           {showLoveModal && (
             <motion.div
@@ -469,6 +494,34 @@ export default function Home() {
                 className="bg-gradient-to-br from-pink-500 to-purple-600 p-8 rounded-xl text-center max-w-md mx-4"
               >
                 <h2 className="text-3xl font-bold mb-4">Me gustas mucho 🥺🖤</h2>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal de cupón de Nico */}
+        <AnimatePresence>
+          {showCouponModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.8, y: 50 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="bg-gradient-to-br from-red-500 to-yellow-500 p-8 rounded-xl text-center max-w-md mx-4 relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-black/5 rounded-xl"></div>
+                <div className="relative z-10">
+                  <h2 className="text-3xl font-bold mb-4">Oferta especial</h2>
+                  <div className="bg-white/20 text-white p-6 rounded-lg mb-4 font-bold text-xl border-2 border-dashed border-white">
+                    Cupón válido por unos besitos
+                  </div>
+                  <p className="text-white/90">🥵🖤</p>
+                </div>
               </motion.div>
             </motion.div>
           )}
