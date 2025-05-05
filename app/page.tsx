@@ -20,6 +20,8 @@ export default function Home() {
   const [selectedRandomMovie, setSelectedRandomMovie] = useState<AppMovie | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionProgress, setSelectionProgress] = useState(0);
+  const [catPressCount, setCatPressCount] = useState(0);
+  const [showCatModal, setShowCatModal] = useState(false);
 
   const debouncedSearch = useCallback(
     debounce(async (searchQuery: string) => {
@@ -51,6 +53,28 @@ export default function Home() {
   useEffect(() => {
     fetchMovies();
   }, [selectedList]);
+
+  const handleCatPress = () => {
+    const newCount = catPressCount + 1;
+    setCatPressCount(newCount);
+    
+    if (newCount >= 5) {
+      setShowCatModal(true);
+      setCatPressCount(0);
+      
+      // Ocultar el modal después de 3 segundos
+      setTimeout(() => {
+        setShowCatModal(false);
+      }, 3000);
+    }
+    
+    // Resetear el contador si no se presiona dentro de 2 segundos
+    setTimeout(() => {
+      if (catPressCount > 0 && catPressCount < 5) {
+        setCatPressCount(0);
+      }
+    }, 2000);
+  };
 
   const fetchMovies = async () => {
     try {
@@ -160,7 +184,17 @@ export default function Home() {
     <div className="bg-black min-h-[100dvh]">
       <header className="bg-gradient-to-b from-gray-800 to-transparent py-6">
         <div className="max-w-6xl mx-auto px-4">
-          <h1 className="text-3xl font-bold text-center mb-6">Lista de pelis que tenemos que ver jeje 😼 🎬</h1>
+          <h1 className="text-3xl font-bold text-center mb-6">
+            Lista de pelis que tenemos que ver jeje 
+            <span 
+              onClick={handleCatPress} 
+              className="cursor-pointer hover:scale-110 transition-transform inline-block"
+              title="Presióname 10 veces 😼"
+            >
+              😻
+            </span>
+            🎬
+          </h1>
 
           <div className="max-w-2xl mx-auto relative">
             <input
@@ -352,7 +386,7 @@ export default function Home() {
           )}
         </section>
 
-        {/* Modal de selección aleatoria (NUEVA VERSIÓN) */}
+        {/* Modal de selección aleatoria */}
         <AnimatePresence>
           {showRandomModal && (
             <motion.div
@@ -425,10 +459,30 @@ export default function Home() {
                       {selectedRandomMovie?.title || ""} 😈
                     </motion.h3>
 
-                   
                   </div>
                 </div>
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal del gato */}
+        <AnimatePresence>
+          {showCatModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.8, y: 50 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="bg-gradient-to-br from-pink-500 to-purple-600 p-8 rounded-xl text-center max-w-md mx-4"
+              >
+                <h2 className="text-3xl font-bold mb-4">Me gustas mucho 🥺🖤</h2>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
