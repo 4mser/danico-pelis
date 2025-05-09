@@ -1,63 +1,17 @@
 // app/layout.tsx
-
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import Head from 'next/head';
+import { Geist, Geist_Mono } from 'next/font/google';
+import './globals.css';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
-
-export async function generateMetadata(): Promise<Metadata> {
-  const baseURL = "https://pelis-barnico.vercel.app";
-
-  return {
-    metadataBase: new URL(baseURL),          // ← establece la base
-    title: "Barnico Pelis",
-    description: "Pelis para ver juntitos",
-
-    openGraph: {
-      type: "website",
-      title: "Barnico Pelis",
-      description: "Pelis para ver juntitos",
-      url: "/",                              // Next concatenará con metadataBase
-      images: [
-        {
-          url: "/us.png",                    // ruta relativa a public/
-          width: 1200,
-          height: 630,
-          alt: "Us",
-        },
-      ],
-    },
-
-    twitter: {
-      card: "summary_large_image",
-      title: "Barnico Pelis",
-      description: "Pelis para ver juntitos",
-      images: ["/us.png"],
-    },
-
-    icons: {
-      icon: "/favicon.ico",
-      apple: "/apple-touch-icon.png",
-    },
-
-    themeColor: [
-      { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-      { media: "(prefers-color-scheme: dark)",  color: "#000000" },
-    ],
-  };
-}
 
 export default function RootLayout({
   children,
@@ -66,7 +20,54 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <Head>
+        {/* Essential Meta */}
+        <meta charSet="UTF-8" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+        />
+        <title>Barnico Pelis</title>
+        <meta name="description" content="Pelis para ver juntitos" />
+        <meta name="author" content="By Entropía" />
+        <meta name="robots" content="index, follow" />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Barnico Pelis" />
+        <meta property="og:description" content="Pelis para ver juntitos" />
+        <meta property="og:url" content="https://pelis-barnico.vercel.app/" />
+        <meta
+          property="og:image"
+          content="https://pelis-barnico.vercel.app/us.png"
+        />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:site_name" content="Barnico Pelis" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Barnico Pelis" />
+        <meta
+          name="twitter:description"
+          content="Pelis para ver juntitos"
+        />
+        <meta
+          name="twitter:image"
+          content="https://pelis-barnico.vercel.app/us.png"
+        />
+        <meta
+          name="twitter:url"
+          content="https://pelis-barnico.vercel.app/"
+        />
+
+        {/* Favicons */}
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      </Head>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         {children}
       </body>
     </html>
