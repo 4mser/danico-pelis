@@ -92,17 +92,17 @@ export default function Page() {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="w-screen h-screen overflow-hidden"
+      className="w-screen h-[100dvh] overflow-hidden"
     >
       <motion.div
         className="flex flex-col"
-        animate={{ y: section === 0 ? '0' : '-100vh' }}
+        animate={{ y: section === 0 ? '0' : '-100dvh' }}
         transition={{ type: 'spring', stiffness: 200, damping: 30 }}
       >
         {/* Sección 1: HomePage */}
         <div
           ref={section1Ref}
-          className="h-screen overflow-y-auto"
+          className="h-[100dvh] overflow-y-auto"
         >
           <HomePage isHomeSection={section === 0} />
         </div>
@@ -110,7 +110,7 @@ export default function Page() {
         {/* Sección 2: CouponsPage */}
         <div
           ref={section2Ref}
-          className="h-screen overflow-y-auto"
+          className="h-[100dvh] overflow-y-auto"
         >
           <CouponsPage />
         </div>
