@@ -15,13 +15,13 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Barnico Pelis",
-  description: "Creado por Nico jeje",
+  description: "Pelis para ver juntitos",
 
   openGraph: {
     type: "website",
     url: "https://pelis-barnico.vercel.app/",
     title: "Barnico Pelis",
-    description: "Creado por Nico jeje",
+    description: "Pelis para ver juntitos",
     images: [
       {
         url: "https://pelis-barnico.vercel.app/us.png", // absoluta
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Barnico Pelis",
-    description: "Creado por Nico jeje",
+    description: "Pelis para ver juntitos",
     images: ["https://pelis-barnico.vercel.app/us.png"],
   },
 
