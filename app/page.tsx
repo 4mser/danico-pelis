@@ -79,7 +79,7 @@ export default function Page() {
             overflowY: 'auto',
           }}
         >
-          <CouponsPage />
+          {/* <CouponsPage /> */}
         </div>
       </motion.div>
     </div>
