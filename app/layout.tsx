@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -12,40 +13,37 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadataBase = new URL("https://pelis-barnico.vercel.app");
-
 export const metadata: Metadata = {
-  title: "pelis barnico",
+  title: "Barnico Pelis",
   description: "Creado por Nico jeje",
 
-  // Open Graph
   openGraph: {
     type: "website",
-    url: "/",                // Next.js concatenará con metadataBase
-    title: "pelis barnico",
+    url: "https://pelis-barnico.vercel.app/",
+    title: "Barnico Pelis",
     description: "Creado por Nico jeje",
     images: [
       {
-        url: "/us.png",      // ruta relativa a public/
+        url: "https://pelis-barnico.vercel.app/us.png", // absoluta
         width: 1200,
         height: 630,
-        alt: "us",
+        alt: "Us",
       },
     ],
   },
 
-  // Twitter Card
   twitter: {
     card: "summary_large_image",
-    title: "pelis barnico",
+    title: "Barnico Pelis",
     description: "Creado por Nico jeje",
-    images: ["/us.png"],
+    images: ["https://pelis-barnico.vercel.app/us.png"],
   },
 
   icons: {
     icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
+
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)",  color: "#000000" },
@@ -54,12 +52,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>
     </html>
