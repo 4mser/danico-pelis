@@ -1,115 +1,85 @@
-// app/page.tsx
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import HomePage from '@/components/HomePage';
-import CouponsPage from '@/components/CouponsPage';
+import CouponsPage from '@/components/CouponsPage'; // <-- Importa el nuevo componente
 
 export default function Page() {
+  const [height, setHeight] = useState(0);
   const [section, setSection] = useState<0 | 1>(0);
-  const overscroll = useRef(0);
+  const [overscroll, setOverscroll] = useState(0);
   const threshold = 1000;
-  const touchStartY = useRef<number | null>(null);
 
   const section1Ref = useRef<HTMLDivElement>(null);
   const section2Ref = useRef<HTMLDivElement>(null);
 
-  // --- Desktop wheel handler ---
+  // medir altura del viewport
+  useEffect(() => {
+    const measure = () => setHeight(window.innerHeight);
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
   const handleWheel = (e: React.WheelEvent) => {
     const ref = section === 0 ? section1Ref.current : section2Ref.current;
     if (!ref) return;
     const { scrollTop, clientHeight, scrollHeight } = ref;
 
-    // si estamos al fondo de la sección 1 y scroll up
+    // avanzar a sección 2
     if (section === 0 && scrollTop + clientHeight >= scrollHeight && e.deltaY > 0) {
-      overscroll.current += e.deltaY;
-      if (overscroll.current > threshold) {
-        setSection(1);
-        overscroll.current = 0;
-      }
+      setOverscroll(prev => {
+        const next = prev + e.deltaY;
+        if (next > threshold) {
+          setSection(1);
+          return 0;
+        }
+        return next;
+      });
       return;
     }
-    // si estamos al tope de la sección 2 y scroll down
+
+    // volver a sección 1
     if (section === 1 && scrollTop <= 0 && e.deltaY < 0) {
-      overscroll.current += e.deltaY;
-      if (overscroll.current < -threshold) {
-        setSection(0);
-        overscroll.current = 0;
-      }
+      setOverscroll(prev => {
+        const next = prev + e.deltaY;
+        if (next < -threshold) {
+          setSection(0);
+          return 0;
+        }
+        return next;
+      });
       return;
     }
-    overscroll.current = 0;
-  };
 
-  // --- Mobile touch handlers ---
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-    overscroll.current = 0;
-  };
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStartY.current === null) return;
-    const currentY = e.touches[0].clientY;
-    const deltaY = touchStartY.current - currentY;
-
-    const ref = section === 0 ? section1Ref.current : section2Ref.current;
-    if (!ref) return;
-    const { scrollTop, clientHeight, scrollHeight } = ref;
-
-    // swipe-up en sección 1
-    if (section === 0 && scrollTop + clientHeight >= scrollHeight && deltaY > 0) {
-      overscroll.current += deltaY;
-      if (overscroll.current > threshold) {
-        setSection(1);
-        overscroll.current = 0;
-      }
-    }
-    // swipe-down en sección 2
-    else if (section === 1 && scrollTop <= 0 && deltaY < 0) {
-      overscroll.current += deltaY;
-      if (overscroll.current < -threshold) {
-        setSection(0);
-        overscroll.current = 0;
-      }
-    } else {
-      overscroll.current = 0;
-    }
-
-    touchStartY.current = currentY;
-  };
-  const handleTouchEnd = () => {
-    touchStartY.current = null;
-    overscroll.current = 0;
+    setOverscroll(0);
   };
 
   return (
     <div
       onWheel={handleWheel}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-
-      className="w-screen h-screen overflow-hidden"
+      style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}
     >
       <motion.div
-        className="flex flex-col"
-        animate={{ y: section === 0 ? '0' : '-100dvh' }}
+        style={{ display: 'flex', flexDirection: 'column' }}
+        animate={{ y: -section * height }}
         transition={{ type: 'spring', stiffness: 200, damping: 30 }}
       >
         {/* Sección 1: HomePage */}
-        <div
-          ref={section1Ref}
-          className="h-[100dvh] overflow-y-auto"
-        >
+        <div ref={section1Ref} style={{ height, overflowY: 'auto' }}>
           <HomePage isHomeSection={section === 0} />
         </div>
 
         {/* Sección 2: CouponsPage */}
         <div
           ref={section2Ref}
-          className="h-[100dvh] overflow-y-auto"
+          style={{
+            height,
+            overflowY: 'auto',
+          }}
         >
-          <CouponsPage />
+          {/* <CouponsPage /> */}
         </div>
       </motion.div>
     </div>
