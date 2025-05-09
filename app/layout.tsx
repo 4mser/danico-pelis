@@ -1,5 +1,6 @@
 // app/layout.tsx
 import type { Metadata } from "next";
+import Head from "next/head";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
     images: [
       {
         url: "https://pelis-barnico.vercel.app/us.png",
-        alt: "Pelis Barnico: Mira pelis juntos",
+        alt: "Nosotros 🖤",
       },
     ],
   },
@@ -61,6 +62,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
+      <Head>
+        {/* Forzamos estos tags para que WhatsApp rasque bien la imagen */}
+        <meta property="og:image" content="https://pelis-barnico.vercel.app/us.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:image" content="https://pelis-barnico.vercel.app/us.png" />
+      </Head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
       </body>
