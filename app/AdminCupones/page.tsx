@@ -117,7 +117,7 @@ export default function AdminCuponesPage() {
                       className={`px-2 py-1 rounded-full text-sm font-medium transition-colors ${
                         c.redeemed
                           ? 'bg-green-600 text-white'
-                          : 'bg-yellow-600 text-gray-900'
+                          : 'bg-white/10 text-white'
                       }`}
                     >
                       {c.redeemed ? 'Descanjear' : 'Canjear'}
@@ -126,7 +126,7 @@ export default function AdminCuponesPage() {
                       onClick={() => handleDelete(c._id)}
                       className="px-2 py-1 rounded-full bg-red-600 text-white text-sm"
                     >
-                      Eliminar
+                      X
                     </button>
                   </div>
                 </li>
