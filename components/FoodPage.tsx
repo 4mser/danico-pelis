@@ -217,7 +217,7 @@ export default function FoodPage() {
           fixed bottom-20 right-4 w-14 h-14 rounded-full p-[2px]
           bg-gradient-to-r from-pink-500 to-purple-600
           hover:from-pink-600 hover:to-purple-700
-          animate-pulse z-20
+          animate-pulse z-10
         "
       >
         <span className="bg-black/70 w-full h-full flex items-center justify-center text-3xl rounded-full">
@@ -229,7 +229,7 @@ export default function FoodPage() {
       <AnimatePresence>
         {showFilters && (
           <motion.div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-end"
+            className="fixed z-20 inset-0 bg-black bg-opacity-50 flex items-end"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setShowFilters(false)}
           >
