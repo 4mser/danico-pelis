@@ -10,7 +10,7 @@ export default function Page() {
   const [section, setSection] = useState<'pelis' | 'cupones' | 'comida'>('pelis');
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-black">
+    <div className="flex flex-col h-[100dvh] ">
       {/* CONTENIDO */}
       <div className="flex-1 overflow-y-auto">
         {section === 'pelis' && <HomePage isHomeSection={true} />}
