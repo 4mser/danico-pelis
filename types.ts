@@ -14,3 +14,10 @@ export interface AppMovie {
   watched: boolean;
   poster?: string;
 }
+
+export interface Coupon {
+  _id: string;
+  title: string;
+  description: string;
+  redeemed: boolean;
+}
