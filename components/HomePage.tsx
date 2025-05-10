@@ -203,7 +203,7 @@ export default function HomePage({isHomeSection}: HomePageProps) {
   };
 
   return (
-    <div className="bg-black min-h-[100dvh]">
+    <div className="bg-black ">
       <header className="bg-gradient-to-b from-gray-800 to-transparent py-6">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-center mb-6">
@@ -280,7 +280,7 @@ export default function HomePage({isHomeSection}: HomePageProps) {
           <div className="text-center">
             <button
               onClick={handleRandomSelection}
-              className="fixed animate-pulse bottom-4 right-4 w-14 h-14 flex items-center justify-center bg-gradient-to-r from-pink-500 to-purple-600 rounded-full
+              className="fixed animate-pulse bottom-20 right-4 w-14 h-14 flex items-center justify-center bg-gradient-to-r from-pink-500 to-purple-600 rounded-full
                 hover:from-pink-600 hover:to-purple-700 transition-all duration-300 p-[2px]"
             >
               <span className="w-full h-full flex items-center justify-center rounded-full text-3xl bg-black/70">
