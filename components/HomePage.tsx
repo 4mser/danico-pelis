@@ -296,7 +296,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
 
       <main className="max-w-6xl mx-auto px-4">
         {/* Selectores de lista */}
-        <div className="flex gap-2 overflow-x-auto mb-8 justify-start pb-3">
+        <div className="flex gap-2 overflow-x-auto text-nowrap mb-8 justify-start pb-3">
           {(["Barbara", "Nico", "Juntos", "Vistas"] as (ListType | "Vistas")[]).map(lst => (
             <button
               key={lst}
