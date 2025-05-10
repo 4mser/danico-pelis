@@ -67,9 +67,8 @@ export default function CouponsPage() {
   return (
     <div className=" min-h-full">
       <div className="max-w-6xl relative mx-auto px-4 py-8">
-        <div className='bg-gradient-to-b from-gray-800 z-0 to-transparent w-full h-56 absolute top-0 left-0'></div>
-        <h2 className="text-3xl  font-bold z-10 text-white text-center mb-8">
-          🏷️ Cupones para Bárbara
+        <h2 className="text-3xl  font-bold  text-white text-center mb-8">
+          Cupones para Bárbara 🏷️ 🖤
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {sortedCoupons.map(c => (

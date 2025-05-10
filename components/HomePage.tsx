@@ -256,7 +256,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Selectores de lista */}
-        <div className="flex gap-3 mb-8 justify-center">
+        <div className="flex gap-2 overflow-x-auto mb-8 justify-start">
           {(["Barbara", "Nico", "Juntos", "Vistas"] as (ListType | "Vistas")[]).map(lst => (
             <button
               key={lst}
@@ -265,7 +265,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
                 if (lst === "Barbara") handleBarbaraPress();
                 if (lst === "Nico") handleNicoPress();
               }}
-              className={`px-4 py-2 text-sm rounded-full transition-colors duration-200 ${
+              className={`px-4 text-nowrap py-2 text-sm rounded-full transition-colors duration-200 ${
                 selectedList === lst
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white"
                   : "bg-gray-800 hover:bg-gray-700 text-gray-300"

@@ -4,17 +4,18 @@
 import React, { useState } from 'react';
 import HomePage from '@/components/HomePage';
 import CouponsPage from '@/components/CouponsPage';
+import FoodPage from '@/components/FoodPage';  // <-- Nuevo import
 
 export default function Page() {
-  const [section, setSection] = useState<'pelis' | 'cupones'>('pelis');
+  const [section, setSection] = useState<'pelis' | 'cupones' | 'comida'>('pelis');
 
   return (
     <div className="flex flex-col h-[100dvh] bg-black">
       {/* CONTENIDO */}
       <div className="flex-1 overflow-y-auto">
-        {section === 'pelis' 
-          ? <HomePage isHomeSection={true} /> 
-          : <CouponsPage />}
+        {section === 'pelis' && <HomePage isHomeSection={true} />}
+        {section === 'cupones' && <CouponsPage />}
+        {section === 'comida' && <FoodPage />}  {/* <-- Nueva sección */}
       </div>
 
       {/* MENÚ INFERIOR */}
@@ -45,6 +46,20 @@ export default function Page() {
         >
           <span className="text-2xl">🎟️</span>
           <span className="text-xs mt-1">Cupones</span>
+        </button>
+
+        {/* Comida */}
+        <button
+          onClick={() => setSection('comida')}
+          className={`
+            flex-1 flex flex-col items-center justify-center
+            ${section === 'comida'
+              ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
+              : 'text-gray-400 hover:text-gray-200'}
+          `}
+        >
+          <span className="text-2xl">🍔</span>
+          <span className="text-xs mt-1">Comida</span>
         </button>
       </nav>
     </div>
