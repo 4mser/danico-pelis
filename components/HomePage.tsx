@@ -1,3 +1,4 @@
+// components/HomePage.tsx
 'use client';
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -23,6 +24,32 @@ interface MovieCardProps {
   onDelete: (movie: AppMovie) => void;
   loading: boolean;
 }
+
+// Variants para animación stagger
+const listVariants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 120,
+      damping: 16,
+    }
+  },
+  exit: { opacity: 0, y: -20, transition: { duration: 0.2 } }
+};
 
 const MovieCard: React.FC<MovieCardProps> = ({ movie, onToggleWatched, onDelete, loading }) => (
   <div className="bg-gradient-to-br from-gray-800 to-transparent rounded-lg p-4 flex items-center gap-4 hover:bg-gray-750 transition-colors">
@@ -77,7 +104,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
   const [showLoveModal, setShowLoveModal] = useState(false);
   const [showCouponModal, setShowCouponModal] = useState(false);
 
-  // Búsqueda con debounce
+  // Debounce de búsqueda
   const debouncedSearch = useCallback(
     debounce(async (q: string) => {
       if (!q.trim()) {
@@ -104,19 +131,17 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
     return () => debouncedSearch.cancel();
   }, [query, debouncedSearch]);
 
-  // Traer películas según la lista seleccionada
+  // Traer películas de la lista seleccionada
   const fetchMovies = async () => {
     setListLoading(true);
     try {
       if (selectedList === "Vistas") {
-        // Traemos todas las listas base y combinamos
         const baseLists: ListType[] = ["Barbara", "Nico", "Juntos"];
         const moviesByList = await Promise.all(baseLists.map(l => getMoviesByList(l)));
         const all = uniqBy(moviesByList.flat(), "_id");
         setAppMovies(all.filter(m => m.watched));
       } else {
         const movies = await getMoviesByList(selectedList as ListType);
-        // Al resto de listas mostramos sólo no vistas
         setAppMovies(movies.filter(m => !m.watched));
       }
       setError("");
@@ -131,7 +156,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
     fetchMovies();
   }, [selectedList]);
 
-  // Operaciones CRUD
+  // CRUD de películas
   const handleAddMovie = async (movie: TMDBMovie, list: ListType) => {
     try {
       setLoading(true);
@@ -180,7 +205,9 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
     setIsSelecting(true);
     setSelectedRandomMovie(null);
     setSelectionProgress(0);
-    const duration = 3000, interval = 100, start = Date.now();
+    const duration = 3000;
+    const interval = 100;
+    const start = Date.now();
     const iv = setInterval(() => {
       const prog = Math.min((Date.now() - start) / duration, 1);
       setSelectionProgress(prog);
@@ -207,7 +234,10 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
       setBarbaraPressCount(0);
       setTimeout(() => setShowLoveModal(false), 3000);
     }
-    setTimeout(() => { if (barbaraPressCount > 0 && barbaraPressCount < 5) setBarbaraPressCount(0); }, 2000);
+    setTimeout(() => {
+      if (barbaraPressCount > 0 && barbaraPressCount < 5)
+        setBarbaraPressCount(0);
+    }, 2000);
   };
   const handleNicoPress = () => {
     const c = nicoPressCount + 1;
@@ -217,7 +247,10 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
       setNicoPressCount(0);
       setTimeout(() => setShowCouponModal(false), 3000);
     }
-    setTimeout(() => { if (nicoPressCount > 0 && nicoPressCount < 5) setNicoPressCount(0); }, 2000);
+    setTimeout(() => {
+      if (nicoPressCount > 0 && nicoPressCount < 5)
+        setNicoPressCount(0);
+    }, 2000);
   };
 
   const firstThree = tmdbMovies.slice(0, 3);
@@ -254,7 +287,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 ">
+      <main className="max-w-6xl mx-auto px-4">
         {/* Selectores de lista */}
         <div className="flex gap-2 overflow-x-auto mb-8 justify-start pb-3">
           {(["Barbara", "Nico", "Juntos", "Vistas"] as (ListType | "Vistas")[]).map(lst => (
@@ -272,9 +305,9 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
               }`}
             >
               {lst === "Barbara" && "Bárbara 😻"}
-              {lst === "Nico" && "Nico 🥵"}
-              {lst === "Juntos" && "Ver Juntos 😈"}
-              {lst === "Vistas" && "Vistas 👀"}
+              {lst === "Nico"     && "Nico 🥵"}
+              {lst === "Juntos"   && "Ver Juntos 😈"}
+              {lst === "Vistas"   && "Vistas 👀"}
             </button>
           ))}
         </div>
@@ -295,26 +328,45 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
         {displayed.length > 0 && (
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Resultados de búsqueda</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {displayed.map(m => (
-                <div key={m.id} className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-colors">
-                  {m.poster && <img src={m.poster} alt={m.title} className="w-full h-96 object-cover rounded-lg mb-4" />}
-                  <h3 className="font-semibold mb-2 truncate">{m.title}</h3>
-                  <div className="flex gap-2 flex-wrap">
-                    {(["Barbara", "Nico", "Juntos"] as (ListType | "Vistas")[]).map(l => (
-                      <button
-                        key={l}
-                        onClick={() => l !== "Vistas" && handleAddMovie(m, l as ListType)}
-                        className="text-md px-3 py-1 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors flex items-center gap-1"
-                        disabled={loading || l === "Vistas"}
-                      >
-                        + {l}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+              variants={listVariants}
+              initial="hidden"
+              animate="show"
+              exit="hidden"
+            >
+              <AnimatePresence>
+                {displayed.map(m => (
+                  <motion.div
+                    key={m.id}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="show"
+                    exit="exit"
+                  >
+                    <div className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-colors">
+                      {m.poster && (
+                        <img src={m.poster} alt={m.title}
+                             className="w-full h-96 object-cover rounded-lg mb-4" />
+                      )}
+                      <h3 className="font-semibold mb-2 truncate">{m.title}</h3>
+                      <div className="flex gap-2 flex-wrap">
+                        {(["Barbara", "Nico", "Juntos"] as ListType[]).map(l => (
+                          <button
+                            key={l}
+                            onClick={() => handleAddMovie(m, l)}
+                            className="text-md px-3 py-1 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors flex items-center gap-1"
+                            disabled={loading}
+                          >
+                            + {l}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
             {!showAllResults && tmdbMovies.length > 3 && (
               <div className="mt-6 text-center">
                 <button
@@ -350,17 +402,32 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
                 : "No hay películas en esta lista"}
             </div>
           ) : (
-            <div className="grid gap-4 pb-10">
-              {appMovies.map(movie => (
-                <MovieCard
-                  key={movie._id}
-                  movie={movie}
-                  onToggleWatched={handleToggleWatched}
-                  onDelete={handleDeleteMovie}
-                  loading={loading}
-                />
-              ))}
-            </div>
+            <motion.div
+              className="grid gap-4 pb-10"
+              variants={listVariants}
+              initial="hidden"
+              animate="show"
+              exit="hidden"
+            >
+              <AnimatePresence>
+                {appMovies.map(movie => (
+                  <motion.div
+                    key={movie._id}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="show"
+                    exit="exit"
+                  >
+                    <MovieCard
+                      movie={movie}
+                      onToggleWatched={handleToggleWatched}
+                      onDelete={handleDeleteMovie}
+                      loading={loading}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
         </section>
 
@@ -450,5 +517,5 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
         )}
       </main>
     </div>
-);
+  );
 }
