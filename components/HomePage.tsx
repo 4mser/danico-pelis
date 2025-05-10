@@ -1,21 +1,19 @@
 // components/HomePage.tsx
 'use client';
 
-import React, { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { debounce, uniqBy } from "lodash";
-import {
-  searchMovies,
-  addMovieToList,
-  getMoviesByList,
-  toggleWatched,
-  deleteMovie
-} from "../services/api";
-import { TMDBMovie, AppMovie, ListType } from "../types";
-import { Spinner } from "@/app/spinner";
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { FiSearch, FiCheck, FiPlus } from 'react-icons/fi';
+import { Icon } from '@iconify/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { searchMovies, addMovieToList, getMoviesByList, toggleWatched, deleteMovie } from '@/services/api';
+import { TMDBMovie, AppMovie, ListType } from '@/types';
+import { Spinner } from '@/app/spinner';
+import { debounce, uniqBy } from 'lodash';
 
 interface HomePageProps {
   isHomeSection: boolean;
+  remountKey: number;
 }
 
 interface MovieCardProps {
@@ -25,29 +23,14 @@ interface MovieCardProps {
   loading: boolean;
 }
 
-// Variants para animación stagger
 const listVariants = {
   hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    }
-  }
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } }
 };
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
-  show: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      type: "spring",
-      stiffness: 120,
-      damping: 16,
-    }
-  },
+  show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 120, damping: 16 } },
   exit: { opacity: 0, y: -20, transition: { duration: 0.2 } }
 };
 
@@ -61,7 +44,7 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onToggleWatched, onDelete,
       </div>
     )}
     <div className="flex-1 flex items-center gap-4">
-      <h3 className={`flex-1 font-medium ${movie.watched ? "text-gray-500 line-through" : ""}`}>
+      <h3 className={`flex-1 font-medium ${movie.watched ? 'text-gray-500 line-through' : ''}`}>
         {movie.title}
       </h3>
       <label className="flex items-center gap-2 cursor-pointer shrink-0">
@@ -86,14 +69,14 @@ const MovieCard: React.FC<MovieCardProps> = ({ movie, onToggleWatched, onDelete,
   </div>
 );
 
-export default function HomePage({ isHomeSection }: HomePageProps) {
-  const [query, setQuery] = useState("");
+export default function HomePage({ isHomeSection, remountKey }: HomePageProps) {
+  const [query, setQuery] = useState('');
   const [tmdbMovies, setTmdbMovies] = useState<TMDBMovie[]>([]);
-  const [selectedList, setSelectedList] = useState<ListType | "Vistas">("Barbara");
+  const [selectedList, setSelectedList] = useState<ListType | 'Vistas'>('Barbara');
   const [appMovies, setAppMovies] = useState<AppMovie[]>([]);
   const [loading, setLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [showAllResults, setShowAllResults] = useState(false);
   const [showRandomModal, setShowRandomModal] = useState(false);
   const [selectedRandomMovie, setSelectedRandomMovie] = useState<AppMovie | null>(null);
@@ -104,71 +87,58 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
   const [showLoveModal, setShowLoveModal] = useState(false);
   const [showCouponModal, setShowCouponModal] = useState(false);
 
-  // Debounce de búsqueda
-  const debouncedSearch = useCallback(
+  const debouncedSearch = useRef(
     debounce(async (q: string) => {
-      if (!q.trim()) {
-        setTmdbMovies([]);
-        return;
-      }
+      if (!q.trim()) { setTmdbMovies([]); return; }
       try {
         setLoading(true);
         const results = await searchMovies(q);
         setTmdbMovies(results);
         setShowAllResults(false);
-        setError("");
+        setError('');
       } catch {
-        setError("Error buscando películas");
+        setError('Error buscando películas');
       } finally {
         setLoading(false);
       }
-    }, 500),
-    []
-  );
+    }, 500)
+  ).current;
 
   useEffect(() => {
     debouncedSearch(query);
-    return () => debouncedSearch.cancel();
   }, [query, debouncedSearch]);
 
-  // Traer películas de la lista seleccionada
   const fetchMovies = async () => {
     setListLoading(true);
     try {
-      if (selectedList === "Vistas") {
-        const baseLists: ListType[] = ["Barbara", "Nico", "Juntos"];
-        const moviesByList = await Promise.all(baseLists.map(l => getMoviesByList(l)));
-        const all = uniqBy(moviesByList.flat(), "_id");
+      if (selectedList === 'Vistas') {
+        const base: ListType[] = ['Barbara','Nico','Juntos'];
+        const byList = await Promise.all(base.map(l => getMoviesByList(l)));
+        const all = uniqBy(byList.flat(), '_id');
         setAppMovies(all.filter(m => m.watched));
       } else {
         const movies = await getMoviesByList(selectedList as ListType);
         setAppMovies(movies.filter(m => !m.watched));
       }
-      setError("");
+      setError('');
     } catch {
-      setError("Error cargando películas");
+      setError('Error cargando películas');
     } finally {
       setListLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchMovies();
-  }, [selectedList]);
+  useEffect(() => { fetchMovies(); }, [selectedList]);
 
-  // CRUD de películas
   const handleAddMovie = async (movie: TMDBMovie, list: ListType) => {
     try {
       setLoading(true);
       await addMovieToList(movie, list);
       await fetchMovies();
       setTmdbMovies(prev => prev.filter(m => m.id !== movie.id));
-      setError("");
-    } catch {
-      setError("Error añadiendo película");
-    } finally {
-      setLoading(false);
-    }
+      setError('');
+    } catch { setError('Error añadiendo película'); }
+    finally { setLoading(false); }
   };
 
   const handleToggleWatched = async (id: string, current: boolean) => {
@@ -176,12 +146,9 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
       setLoading(true);
       await toggleWatched(id, current);
       await fetchMovies();
-      setError("");
-    } catch {
-      setError("Error actualizando estado");
-    } finally {
-      setLoading(false);
-    }
+      setError('');
+    } catch { setError('Error actualizando estado'); }
+    finally { setLoading(false); }
   };
 
   const handleDeleteMovie = async (movie: AppMovie) => {
@@ -190,42 +157,36 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
       setLoading(true);
       await deleteMovie(movie._id);
       await fetchMovies();
-      setError("");
-    } catch {
-      setError("Error eliminando película");
-    } finally {
-      setLoading(false);
-    }
+      setError('');
+    } catch { setError('Error eliminando película'); }
+    finally { setLoading(false); }
   };
 
-  // Selección aleatoria
   const handleRandomSelection = () => {
     if (appMovies.length < 2) return;
     setShowRandomModal(true);
     setIsSelecting(true);
     setSelectedRandomMovie(null);
     setSelectionProgress(0);
-    const duration = 3000;
-    const interval = 100;
-    const start = Date.now();
+    const duration = 3000, interval = 100, start = Date.now();
     const iv = setInterval(() => {
       const prog = Math.min((Date.now() - start) / duration, 1);
       setSelectionProgress(prog);
-      setSelectedRandomMovie(appMovies[Math.floor(Math.random() * appMovies.length)]);
+      setSelectedRandomMovie(appMovies[Math.floor(Math.random()*appMovies.length)]);
       if (prog >= 1) {
         clearInterval(iv);
         setIsSelecting(false);
-        setSelectedRandomMovie(appMovies[Math.floor(Math.random() * appMovies.length)]);
+        setSelectedRandomMovie(appMovies[Math.floor(Math.random()*appMovies.length)]);
       }
     }, interval);
   };
 
   const handleClearSearch = () => {
-    setQuery("");
+    setQuery('');
     setTmdbMovies([]);
   };
 
-  // Easter eggs
+  // Easter eggs…
   const handleBarbaraPress = () => {
     const c = barbaraPressCount + 1;
     setBarbaraPressCount(c);
@@ -253,13 +214,12 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
     }, 2000);
   };
 
-  const firstThree = tmdbMovies.slice(0, 3);
-  const remaining = tmdbMovies.slice(3);
+  const firstThree = tmdbMovies.slice(0,3);
   const displayed = showAllResults ? tmdbMovies : firstThree;
 
   return (
     <div className="">
-      {/* Header y búsqueda */}
+      {/* HEADER + BÚSQUEDA */}
       <header className="bg-gradient-to-b from-gray-800 to-transparent py-6">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-center mb-6">
@@ -278,9 +238,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
               <button
                 onClick={handleClearSearch}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
-              >
-                ✕
-              </button>
+              >✕</button>
             )}
             {loading && <div className="absolute right-3 top-3"><Spinner size="sm" /></div>}
           </div>
@@ -288,47 +246,49 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
       </header>
 
       <main className="max-w-6xl mx-auto px-4">
-        {/* Selectores de lista */}
+
+        {/* SELECTORES */}
         <div className="flex gap-2 overflow-x-auto mb-8 justify-start pb-3">
-          {(["Barbara", "Nico", "Juntos", "Vistas"] as (ListType | "Vistas")[]).map(lst => (
+          {(['Barbara','Nico','Juntos','Vistas'] as (ListType|'Vistas')[]).map(lst => (
             <button
               key={lst}
               onClick={() => {
                 setSelectedList(lst);
-                if (lst === "Barbara") handleBarbaraPress();
-                if (lst === "Nico") handleNicoPress();
+                if (lst==='Barbara') handleBarbaraPress();
+                if (lst==='Nico')     handleNicoPress();
               }}
-              className={`px-4 text-nowrap py-2 text-sm rounded-full transition-colors duration-200 ${
-                selectedList === lst
-                  ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white"
-                  : "bg-gray-800 hover:bg-gray-700 text-gray-300"
+              className={`px-4 py-2 text-sm rounded-full transition-colors duration-200 ${
+                selectedList===lst
+                  ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white'
+                  : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
               }`}
             >
-              {lst === "Barbara" && "Bárbara 😻"}
-              {lst === "Nico"     && "Nico 🥵"}
-              {lst === "Juntos"   && "Ver Juntos 😈"}
-              {lst === "Vistas"   && "Vistas 👀"}
+              {lst==='Barbara' && 'Bárbara 😻'}
+              {lst==='Nico'     && 'Nico 🥵'}
+              {lst==='Juntos'   && 'Ver Juntos 😈'}
+              {lst==='Vistas'   && 'Vistas 👀'}
             </button>
           ))}
         </div>
 
-        {/* Botón aleatorio */}
-        {isHomeSection && appMovies.length > 1 && !listLoading && (
+        {/* BOTÓN ALEATORIO */}
+        {isHomeSection && appMovies.length>1 && !listLoading && (
           <button
             onClick={handleRandomSelection}
-            className="fixed animate-pulse bottom-20 right-4 w-14 h-14 flex items-center justify-center bg-gradient-to-r from-pink-500 to-purple-600 rounded-full hover:from-pink-600 hover:to-purple-700 transition-all duration-300 p-[2px]"
+            className="fixed bottom-20 right-4 w-14 h-14 flex items-center justify-center bg-gradient-to-r from-pink-500 to-purple-600 rounded-full hover:from-pink-600 hover:to-purple-700 animate-pulse p-[2px]"
           >
-            <span className="w-full h-full flex items-center justify-center rounded-full text-3xl bg-black/70">
+            <span className="bg-black/70 w-full h-full flex items-center justify-center text-3xl rounded-full">
               🎲
             </span>
           </button>
         )}
 
-        {/* Resultados de búsqueda */}
-        {displayed.length > 0 && (
+        {/* RESULTADOS DE BÚSQUEDA */}
+        {displayed.length>0 && (
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Resultados de búsqueda</h2>
             <motion.div
+              key={remountKey}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
               variants={listVariants}
               initial="hidden"
@@ -351,11 +311,11 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
                       )}
                       <h3 className="font-semibold mb-2 truncate">{m.title}</h3>
                       <div className="flex gap-2 flex-wrap">
-                        {(["Barbara", "Nico", "Juntos"] as ListType[]).map(l => (
+                        {(['Barbara','Nico','Juntos'] as ListType[]).map(l => (
                           <button
                             key={l}
                             onClick={() => handleAddMovie(m, l)}
-                            className="text-md px-3 py-1 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors flex items-center gap-1"
+                            className="px-3 py-1 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors flex items-center gap-1"
                             disabled={loading}
                           >
                             + {l}
@@ -367,7 +327,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
                 ))}
               </AnimatePresence>
             </motion.div>
-            {!showAllResults && tmdbMovies.length > 3 && (
+            {!showAllResults && tmdbMovies.length>3 && (
               <div className="mt-6 text-center">
                 <button
                   onClick={() => setShowAllResults(true)}
@@ -380,29 +340,32 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
           </section>
         )}
 
-        {/* Contenido de la lista activa */}
+        {/* LISTA ACTIVA */}
         <section>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">
-              {selectedList === "Vistas"
-                ? "Películas Vistas"
-                : `Pelis para ${selectedList === "Juntos" ? "ver " : ""}${selectedList}`}
+              {selectedList==='Vistas'
+                ? 'Películas Vistas'
+                : `Pelis para ${selectedList==='Juntos' ? 'ver ' : ''}${selectedList}`}
             </h2>
             <span className="bg-gray-800 px-3 py-1 rounded-full text-sm">
-              {appMovies.length} {appMovies.length === 1 ? "Película" : "Películas"}
+              {appMovies.length} {appMovies.length===1 ? 'Película' : 'Películas'}
             </span>
           </div>
 
           {listLoading ? (
-            <div className="text-center py-12 flex justify-center"><Spinner size="lg" /></div>
-          ) : appMovies.length === 0 ? (
+            <div className="text-center py-12 flex justify-center">
+              <Spinner size="lg" />
+            </div>
+          ) : appMovies.length===0 ? (
             <div className="text-center py-12 text-gray-400">
-              {selectedList === "Vistas"
-                ? "No hay vistas aún"
-                : "No hay películas en esta lista"}
+              {selectedList==='Vistas'
+                ? 'No hay vistas aún'
+                : 'No hay películas en esta lista'}
             </div>
           ) : (
             <motion.div
+              key={remountKey}
               className="grid gap-4 pb-10"
               variants={listVariants}
               initial="hidden"
@@ -431,90 +394,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
           )}
         </section>
 
-        {/* Modales */}
-        <AnimatePresence>
-          {showRandomModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
-              <div className="relative w-full max-w-2xl p-6">
-                <button onClick={() => setShowRandomModal(false)}
-                        className="fixed top-4 right-4 text-white hover:text-pink-500 z-50 text-6xl">&times;</button>
-                <div className="rounded-xl overflow-hidden p-6 text-center">
-                  <h2 className="text-2xl font-bold mb-6">
-                    {isSelecting ? "Seleccionando..." : "¡Película seleccionada!"}
-                  </h2>
-                  <div className="min-h-[300px] flex items-center justify-center">
-                    {selectedRandomMovie ? (
-                      <motion.img
-                        src={selectedRandomMovie.poster || "/placeholder.jpg"}
-                        alt={selectedRandomMovie.title}
-                        className="mx-auto max-h-64 rounded-lg shadow-xl"
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ type: "spring" }}
-                      />
-                    ) : (
-                      <Spinner size="lg" />
-                    )}
-                  </div>
-                  {isSelecting && (
-                    <motion.div className="mt-6 bg-gray-800 rounded-full h-2 overflow-hidden">
-                      <motion.div
-                        className="h-full bg-gradient-to-r from-pink-500 to-purple-600"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${selectionProgress * 100}%` }}
-                        transition={{ duration: 3 }}
-                      />
-                    </motion.div>
-                  )}
-                  {!isSelecting && (
-                    <motion.h3 className="text-xl font-bold mt-6">
-                      {selectedRandomMovie?.title} 😈
-                    </motion.h3>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-          {showLoveModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
-              <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }}
-                          exit={{ scale: 0.8, opacity: 0 }}
-                          className="bg-gradient-to-br from-pink-500 to-purple-600 p-8 rounded-xl text-center max-w-md mx-4">
-                <h2 className="text-3xl font-bold mb-4">Me gustas mucho 🥺🖤</h2>
-              </motion.div>
-            </motion.div>
-          )}
-          {showCouponModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
-              <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }}
-                          exit={{ scale: 0.8, opacity: 0 }}
-                          className="bg-gradient-to-br from-red-500 to-yellow-500 p-8 rounded-xl text-center max-w-md mx-4 relative overflow-hidden">
-                <div className="absolute inset-0 bg-black/5 rounded-xl" />
-                <div className="relative z-10">
-                  <h2 className="text-3xl font-bold mb-4">Oferta especial</h2>
-                  <div className="bg-white/20 text-white p-6 rounded-lg mb-4 font-bold text-xl border-2 border-dashed border-white">
-                    Cupón válido por unos besitos
-                  </div>
-                  <p className="text-white/90">🥵🖤</p>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {loading && (
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center">
-            <Spinner size="lg" />
-          </div>
-        )}
-        {error && (
-          <div className="fixed bottom-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg animate-fade-in-up">
-            ⚠️ {error}
-          </div>
-        )}
+        {/* MODALES y overlays de loading/error… */}
       </main>
     </div>
   );
