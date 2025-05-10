@@ -4,6 +4,7 @@ export interface TMDBMovie {
   id: number;
   title: string;
   poster?: string;
+  type: 'movie' | 'series';
 }
 
 export interface AppMovie {

@@ -25,7 +25,6 @@ interface MovieCardProps {
   loading: boolean;
 }
 
-// Variants para animación stagger
 const listVariants = {
   hidden: {},
   show: {
@@ -51,40 +50,49 @@ const itemVariants = {
   exit: { opacity: 0, y: -20, transition: { duration: 0.2 } }
 };
 
-const MovieCard: React.FC<MovieCardProps> = ({ movie, onToggleWatched, onDelete, loading }) => (
-  <div className="bg-gradient-to-br from-gray-800 to-transparent rounded-lg p-4 flex items-center gap-4 hover:bg-gray-750 transition-colors">
-    {movie.poster ? (
-      <img src={movie.poster} alt={movie.title} className="w-20 h-28 object-cover rounded-lg" />
-    ) : (
-      <div className="w-20 h-28 bg-gray-700 rounded-lg flex items-center justify-center">
-        <span className="text-gray-400 text-xs">Sin imagen</span>
-      </div>
-    )}
-    <div className="flex-1 flex items-center gap-4">
-      <h3 className={`flex-1 font-medium ${movie.watched ? "text-gray-500 line-through" : ""}`}>
-        {movie.title}
-      </h3>
-      <label className="flex items-center gap-2 cursor-pointer shrink-0">
-        <input
-          type="checkbox"
-          checked={movie.watched}
-          onChange={() => onToggleWatched(movie._id, movie.watched)}
-          className="w-5 h-5 rounded border-gray-600 bg-gray-700 checked:bg-purple-600 checked:border-purple-600 focus:ring-purple-600"
-          disabled={loading}
+const MovieCard: React.FC<MovieCardProps> = ({ movie, onToggleWatched, onDelete, loading }) => {
+  // Si no hay poster y es Arcane, mostramos arcane.webp
+  const imageSrc = movie.poster ?? (movie.title === 'Arcane' ? '/arcane.webp' : null);
+
+  return (
+    <div className="bg-gradient-to-br from-gray-800 to-transparent rounded-lg p-4 flex items-center gap-4 hover:bg-gray-750 transition-colors">
+      {imageSrc ? (
+        <img
+          src={imageSrc}
+          alt={movie.title}
+          className="w-20 h-28 object-cover rounded-lg"
         />
-        <span className="text-sm">Vista</span>
-      </label>
-      <button
-        onClick={() => onDelete(movie)}
-        className="text-red-600 hover:text-red-400 transition-colors p-1"
-        disabled={loading}
-        title="Eliminar película"
-      >
-        🗑️
-      </button>
+      ) : (
+        <div className="w-20 h-28 bg-gray-700 rounded-lg flex items-center justify-center">
+          <span className="text-gray-400 text-xs">Sin imagen</span>
+        </div>
+      )}
+      <div className="flex-1 flex items-center gap-4">
+        <h3 className={`flex-1 font-medium ${movie.watched ? "text-gray-500 line-through" : ""}`}>
+          {movie.title}
+        </h3>
+        <label className="flex items-center gap-2 cursor-pointer shrink-0">
+          <input
+            type="checkbox"
+            checked={movie.watched}
+            onChange={() => onToggleWatched(movie._id, movie.watched)}
+            className="w-5 h-5 rounded border-gray-600 bg-gray-700 checked:bg-purple-600 checked:border-purple-600 focus:ring-purple-600"
+            disabled={loading}
+          />
+          <span className="text-sm">Vista</span>
+        </label>
+        <button
+          onClick={() => onDelete(movie)}
+          className="text-red-600 hover:text-red-400 transition-colors p-1"
+          disabled={loading}
+          title="Eliminar película"
+        >
+          🗑️
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function HomePage({ isHomeSection }: HomePageProps) {
   const [query, setQuery] = useState("");
@@ -118,7 +126,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
         setShowAllResults(false);
         setError("");
       } catch {
-        setError("Error buscando películas");
+        setError("Error buscando pelis y series");
       } finally {
         setLoading(false);
       }
@@ -146,7 +154,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
       }
       setError("");
     } catch {
-      setError("Error cargando películas");
+      setError("Error cargando listas");
     } finally {
       setListLoading(false);
     }
@@ -165,7 +173,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
       setTmdbMovies(prev => prev.filter(m => m.id !== movie.id));
       setError("");
     } catch {
-      setError("Error añadiendo película");
+      setError("Error añadiendo a la lista");
     } finally {
       setLoading(false);
     }
@@ -192,7 +200,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
       await fetchMovies();
       setError("");
     } catch {
-      setError("Error eliminando película");
+      setError("Error eliminando de la lista");
     } finally {
       setLoading(false);
     }
@@ -254,16 +262,15 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
   };
 
   const firstThree = tmdbMovies.slice(0, 3);
-  const remaining = tmdbMovies.slice(3);
   const displayed = showAllResults ? tmdbMovies : firstThree;
 
   return (
-    <div className="">
+    <div>
       {/* Header y búsqueda */}
       <header className="bg-gradient-to-b from-gray-800 to-transparent py-6">
         <div className="max-w-6xl mx-auto px-4">
           <h1 className="text-3xl font-bold text-center mb-6">
-            Lista de pelis que tenemos que ver jeje 😼🎬
+            Pelis y Series 🎬
           </h1>
           <div className="max-w-2xl mx-auto relative">
             <input
@@ -271,7 +278,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-100"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="🔍 Buscar pelis..."
+              placeholder="🔍 Buscar pelis y series..."
               disabled={loading}
             />
             {query && !loading && (
@@ -298,14 +305,14 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
                 if (lst === "Barbara") handleBarbaraPress();
                 if (lst === "Nico") handleNicoPress();
               }}
-              className={`px-4 text-nowrap py-2 text-sm rounded-full transition-colors duration-200 ${
+              className={`px-4 py-2 text-sm rounded-full transition-colors duration-200 ${
                 selectedList === lst
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white"
                   : "bg-gray-800 hover:bg-gray-700 text-gray-300"
               }`}
             >
               {lst === "Barbara" && "Bárbara 😻"}
-              {lst === "Nico"     && "Nico 🥵"}
+              {lst === "Nico"     && "Nico 😼"}
               {lst === "Juntos"   && "Ver Juntos 😈"}
               {lst === "Vistas"   && "Vistas 👀"}
             </button>
@@ -345,17 +352,27 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
                     exit="exit"
                   >
                     <div className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-colors">
-                      {m.poster && (
-                        <img src={m.poster} alt={m.title}
-                             className="w-full h-96 object-cover rounded-lg mb-4" />
-                      )}
+                      {(() => {
+                        const imageSrc = m.poster ?? (m.title === 'Arcane' ? '/arcane.webp' : null);
+                        return imageSrc ? (
+                          <img
+                            src={imageSrc}
+                            alt={m.title}
+                            className="w-full h-96 object-cover rounded-lg mb-4"
+                          />
+                        ) : (
+                          <div className="w-full h-96 bg-gray-700 rounded-lg flex items-center justify-center mb-4">
+                            <span className="text-gray-400 text-xs">Sin imagen</span>
+                          </div>
+                        );
+                      })()}
                       <h3 className="font-semibold mb-2 truncate">{m.title}</h3>
                       <div className="flex gap-2 flex-wrap">
                         {(["Barbara", "Nico", "Juntos"] as ListType[]).map(l => (
                           <button
                             key={l}
                             onClick={() => handleAddMovie(m, l)}
-                            className="text-md px-3 py-1 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors flex items-center gap-1"
+                            className="px-3 py-1 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors text-md flex items-center gap-1"
                             disabled={loading}
                           >
                             + {l}
@@ -385,8 +402,8 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">
               {selectedList === "Vistas"
-                ? "Películas Vistas"
-                : `Pelis para ${selectedList === "Juntos" ? "ver " : ""}${selectedList}`}
+                ? "Vistas"
+                : `Para ${selectedList === "Juntos" ? "ver " : ""}${selectedList}`}
             </h2>
             <span className="bg-gray-800 px-3 py-1 rounded-full text-sm">
               {appMovies.length} {appMovies.length === 1 ? "Película" : "Películas"}
@@ -399,7 +416,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
             <div className="text-center py-12 text-gray-400">
               {selectedList === "Vistas"
                 ? "No hay vistas aún"
-                : "No hay películas en esta lista"}
+                : "No hay nada en esta lista"}
             </div>
           ) : (
             <motion.div
@@ -434,11 +451,19 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
         {/* Modales */}
         <AnimatePresence>
           {showRandomModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50"
+            >
               <div className="relative w-full max-w-2xl p-6">
-                <button onClick={() => setShowRandomModal(false)}
-                        className="fixed top-4 right-4 text-white hover:text-pink-500 z-50 text-6xl">&times;</button>
+                <button
+                  onClick={() => setShowRandomModal(false)}
+                  className="fixed top-4 right-4 text-white hover:text-pink-500 z-50 text-6xl"
+                >
+                  &times;
+                </button>
                 <div className="rounded-xl overflow-hidden p-6 text-center">
                   <h2 className="text-2xl font-bold mb-6">
                     {isSelecting ? "Seleccionando..." : "¡Película seleccionada!"}
@@ -446,7 +471,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
                   <div className="min-h-[300px] flex items-center justify-center">
                     {selectedRandomMovie ? (
                       <motion.img
-                        src={selectedRandomMovie.poster || "/placeholder.jpg"}
+                        src={selectedRandomMovie.poster ?? '/placeholder.jpg'}
                         alt={selectedRandomMovie.title}
                         className="mx-auto max-h-64 rounded-lg shadow-xl"
                         initial={{ scale: 0.9, opacity: 0 }}
@@ -457,7 +482,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
                       <Spinner size="lg" />
                     )}
                   </div>
-                  {isSelecting && (
+                  {isSelecting ? (
                     <motion.div className="mt-6 bg-gray-800 rounded-full h-2 overflow-hidden">
                       <motion.div
                         className="h-full bg-gradient-to-r from-pink-500 to-purple-600"
@@ -466,8 +491,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
                         transition={{ duration: 3 }}
                       />
                     </motion.div>
-                  )}
-                  {!isSelecting && (
+                  ) : (
                     <motion.h3 className="text-xl font-bold mt-6">
                       {selectedRandomMovie?.title} 😈
                     </motion.h3>
@@ -477,21 +501,35 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
             </motion.div>
           )}
           {showLoveModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
-              <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }}
-                          exit={{ scale: 0.8, opacity: 0 }}
-                          className="bg-gradient-to-br from-pink-500 to-purple-600 p-8 rounded-xl text-center max-w-md mx-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.8, y: 50 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="bg-gradient-to-br from-pink-500 to-purple-600 p-8 rounded-xl text-center max-w-md mx-4"
+              >
                 <h2 className="text-3xl font-bold mb-4">Me gustas mucho 🥺🖤</h2>
               </motion.div>
             </motion.div>
           )}
           {showCouponModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
-              <motion.div initial={{ scale: 0.8, y: 50 }} animate={{ scale: 1, y: 0 }}
-                          exit={{ scale: 0.8, opacity: 0 }}
-                          className="bg-gradient-to-br from-red-500 to-yellow-500 p-8 rounded-xl text-center max-w-md mx-4 relative overflow-hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50"
+            >
+              <motion.div
+                initial={{ scale: 0.8, y: 50 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="bg-gradient-to-br from-red-500 to-yellow-500 p-8 rounded-xl text-center max-w-md mx-4 relative overflow-hidden"
+              >
                 <div className="absolute inset-0 bg-black/5 rounded-xl" />
                 <div className="relative z-10">
                   <h2 className="text-3xl font-bold mb-4">Oferta especial</h2>
@@ -505,11 +543,13 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
           )}
         </AnimatePresence>
 
+        {/* Loading overlay */}
         {loading && (
           <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center">
             <Spinner size="lg" />
           </div>
         )}
+        {/* Error toast */}
         {error && (
           <div className="fixed bottom-4 right-4 bg-red-600 text-white px-6 py-3 rounded-lg animate-fade-in-up">
             ⚠️ {error}

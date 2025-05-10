@@ -31,7 +31,7 @@ export default function Page() {
           `}
         >
           <span className="text-2xl">🎬</span>
-          <span className="text-xs mt-1">Pelis</span>
+          <span className="text-xs mt-1">Pelis y Series</span>
         </button>
 
         {/* Cupones */}
