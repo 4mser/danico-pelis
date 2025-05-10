@@ -93,7 +93,7 @@ export default function FoodPage() {
   return (
     <div className="bg-gray-900 text-white min-h-screen flex flex-col">
       {/* Top bar */}
-      <header className="sticky top-0 z-20 bg-gray-800 p-4 flex items-center space-x-3">
+      <header className="sticky top-0 z-20 bg-gray-800 p-4 flex items-center space-x-3 shadow-xl">
         <div className="relative flex-1">
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
