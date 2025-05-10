@@ -1,4 +1,3 @@
-// components/CouponsPage.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -60,19 +59,20 @@ export default function CouponsPage() {
     );
   }
 
+  // Ordenar: primero no canjeados, luego canjeados
+  const sortedCoupons = [...coupons].sort((a, b) =>
+    a.redeemed === b.redeemed ? 0 : a.redeemed ? 1 : -1
+  );
+
   return (
-    <div className="bg-black min-h-full">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <h2 className="text-3xl font-bold text-white text-center mb-8">
+    <div className=" min-h-full">
+      <div className="max-w-6xl relative mx-auto px-4 py-8">
+        <div className='bg-gradient-to-b from-gray-800 z-0 to-transparent w-full h-56 absolute top-0 left-0'></div>
+        <h2 className="text-3xl  font-bold z-10 text-white text-center mb-8">
           🏷️ Cupones para Bárbara
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/*
-            Invertimos el array antes de mapear:
-            slice() para no mutar el estado original,
-            reverse() para invertir el orden.
-          */}
-          {coupons.slice().reverse().map(c => (
+          {sortedCoupons.map(c => (
             <div key={c._id} className="relative">
               {/* Notches */}
               <div className="absolute -left-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-black rounded-full" />
@@ -106,12 +106,12 @@ export default function CouponsPage() {
                 </p>
 
                 {/* Switch de canje */}
-                <div className="mt-4 flex items-center">
+                <div className="mt-4 flex items-center justify-end">
                   {toggling[c._id] ? (
                     <Spinner size="sm" />
                   ) : (
-                    <label className="inline-flex items-center cursor-pointer w-full gap-2 justify-end">
-                      <span className="ml-3 text-sm font-medium text-gray-200">
+                    <label className="inline-flex items-center cursor-pointer gap-2">
+                      <span className="text-sm font-medium text-gray-200">
                         {c.redeemed ? 'Canjeado' : 'Canjear'}
                       </span>
                       <input
