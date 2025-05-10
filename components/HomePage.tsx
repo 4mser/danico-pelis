@@ -254,9 +254,9 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-6xl mx-auto px-4 ">
         {/* Selectores de lista */}
-        <div className="flex gap-2 overflow-x-auto mb-8 justify-start">
+        <div className="flex gap-2 overflow-x-auto mb-8 justify-start pb-3">
           {(["Barbara", "Nico", "Juntos", "Vistas"] as (ListType | "Vistas")[]).map(lst => (
             <button
               key={lst}
