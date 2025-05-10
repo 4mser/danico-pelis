@@ -47,7 +47,7 @@ export default function FoodPage() {
 
   const handleLike = async (p: Product, who: 'Barbara' | 'Nico') => {
     setTogHeart(t => ({ ...t, [p._id]: true }));
-    // optimista
+    // Optimista
     setItems(old => old.map(x => {
       if (x._id !== p._id) return x;
       return {
@@ -71,7 +71,7 @@ export default function FoodPage() {
     searchRef.current = setTimeout(() => setSearch(v), 300);
   };
 
-  // Aplicar todos los filtros
+  // Aplicar filtros
   const visible = useMemo(() => items
     .filter(p => {
       if (statusFilter === 'pending' && p.bought) return false;
@@ -86,12 +86,8 @@ export default function FoodPage() {
     })
   , [items, statusFilter, heartFilter, search]);
 
-  const Skeleton = () => (
-    <div className="animate-pulse bg-gray-700 rounded-xl h-60 w-full" />
-  );
-
   return (
-    <div className="bg-gray-900 text-white min-h-screen flex flex-col">
+    <div className="bg-gray-900 text-white  flex flex-col">
       {/* Top bar */}
       <header className="sticky top-0 z-20 bg-gray-800 p-4 flex items-center space-x-3 shadow-xl">
         <div className="relative flex-1">
@@ -114,8 +110,8 @@ export default function FoodPage() {
       {/* Contenido */}
       <main className="flex-1 overflow-y-auto p-4 pb-10">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i}/> )}
+          <div className="w-full h-[70dvh] flex items-center justify-center">
+            <Spinner size="lg" />
           </div>
         ) : visible.length === 0 ? (
           <p className="text-center text-gray-500 mt-20">No hay productos.</p>
@@ -142,7 +138,7 @@ export default function FoodPage() {
                   </button>
 
                   {/* Corazones / picker */}
-                  <div className="absolute top-[52px] right-2 ">
+                  <div className="absolute top-[52px] right-2">
                     {both ? (
                       <div className="relative">
                         <motion.button
