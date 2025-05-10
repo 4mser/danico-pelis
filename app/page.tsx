@@ -58,8 +58,8 @@ export default function Page() {
               : 'text-gray-400 hover:text-gray-200'}
           `}
         >
-          <span className="text-2xl">🍔</span>
-          <span className="text-xs mt-1">Comida</span>
+          <span className="text-2xl">🍟</span>
+          <span className="text-xs mt-1">Cosas Ricas</span>
         </button>
       </nav>
     </div>
