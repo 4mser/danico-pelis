@@ -65,12 +65,12 @@ export default function CouponsPage() {
   );
 
   return (
-    <div className=" min-h-full bg-gray-900">
-      <div className="max-w-6xl relative mx-auto px-4 py-8">
+    <div className=" min-h-full w-full bg-gray-900">
+      <div className="max-w-6xl relative mx-auto overflow-x-hidden px-4 py-8">
         <h2 className="text-3xl  font-bold  text-white text-center mb-8">
           Cupones para Bárbara 🏷️ 🖤
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 ">
           {sortedCoupons.map(c => (
             <div key={c._id} className="relative">
               {/* Notches */}

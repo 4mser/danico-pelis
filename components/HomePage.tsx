@@ -350,7 +350,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
                 : "No hay películas en esta lista"}
             </div>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-4 pb-10">
               {appMovies.map(movie => (
                 <MovieCard
                   key={movie._id}
