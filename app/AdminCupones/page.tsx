@@ -9,6 +9,7 @@ import {
   deleteCoupon,
 } from '@/services/api';
 import { Coupon } from '@/types';
+import Link from 'next/link';
 
 export default function AdminCuponesPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -67,6 +68,7 @@ export default function AdminCuponesPage() {
   return (
     <div className="flex flex-col h-screen bg-black text-white">
       <div className="flex-1 overflow-y-auto max-w-3xl mx-auto p-6 space-y-6">
+        <Link href={'/'} >Volver al Home</Link>
         <h1 className="text-3xl font-bold text-center">Admin de Cupones</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">

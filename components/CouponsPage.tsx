@@ -67,7 +67,12 @@ export default function CouponsPage() {
           🏷️ Cupones para Bárbara
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {coupons.map(c => (
+          {/*
+            Invertimos el array antes de mapear:
+            slice() para no mutar el estado original,
+            reverse() para invertir el orden.
+          */}
+          {coupons.slice().reverse().map(c => (
             <div key={c._id} className="relative">
               {/* Notches */}
               <div className="absolute -left-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-black rounded-full" />
@@ -105,7 +110,10 @@ export default function CouponsPage() {
                   {toggling[c._id] ? (
                     <Spinner size="sm" />
                   ) : (
-                    <label className="inline-flex items-center cursor-pointer">
+                    <label className="inline-flex items-center cursor-pointer w-full gap-2 justify-end">
+                      <span className="ml-3 text-sm font-medium text-gray-200">
+                        {c.redeemed ? 'Canjeado' : 'Canjear'}
+                      </span>
                       <input
                         type="checkbox"
                         className="sr-only peer"
@@ -123,9 +131,6 @@ export default function CouponsPage() {
                         peer-checked:before:translate-x-full
                         ${c.redeemed ? 'cursor-not-allowed' : 'cursor-pointer'}
                       `} />
-                      <span className="ml-3 text-sm font-medium text-gray-200">
-                        {c.redeemed ? 'Canjeado' : 'Disponible'}
-                      </span>
                     </label>
                   )}
                 </div>
