@@ -269,7 +269,7 @@ export default function HomePage({isHomeSection}: HomePageProps) {
                   ? "bg-gradient-to-r from-violet-500 to-purple-600 text-white" 
                   : "bg-gray-800 hover:bg-gray-700 text-gray-300"}`}
             >
-              {list === 'Barbara' && 'Barbara 😻'}
+              {list === 'Barbara' && 'Bárbara 😻'}
               {list === 'Nico' && 'Nico 🥵'}
               {list === 'Juntos' && 'Ver Juntos 😈'}
             </button>
