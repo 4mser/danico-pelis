@@ -127,7 +127,7 @@ export default function FoodPage() {
                 <div key={p._id} className="relative bg-gray-800 rounded-xl overflow-hidden shadow-lg">
                   <img
                     src={p.image} alt={p.name}
-                    className="h-40 w-full object-cover"
+                    className="h-[147px] w-full object-cover"
                   />
 
                   {/* Comprado */}
@@ -154,7 +154,7 @@ export default function FoodPage() {
                         </motion.button>
                         {pickerId === p._id && (
                           <div
-                            className="absolute top-12 right-0 flex bg-gray-700 rounded-full px-2 py-1 space-x-2 shadow-lg"
+                            className="absolute top-11 right-0 flex bg-gray-700 rounded-full px-2 py-1 space-x-2 shadow-lg"
                             onClick={e => e.stopPropagation()}
                           >
                             <button onClick={() => handleLike(p, 'Barbara')}>
