@@ -65,7 +65,7 @@ export default function CouponsPage() {
   );
 
   return (
-    <div className=" min-h-full">
+    <div className=" min-h-full bg-gray-900">
       <div className="max-w-6xl relative mx-auto px-4 py-8">
         <h2 className="text-3xl  font-bold  text-white text-center mb-8">
           Cupones para Bárbara 🏷️ 🖤
@@ -74,8 +74,8 @@ export default function CouponsPage() {
           {sortedCoupons.map(c => (
             <div key={c._id} className="relative">
               {/* Notches */}
-              <div className="absolute -left-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-black rounded-full" />
-              <div className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-black rounded-full" />
+              <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-gray-900 rounded-full" />
+              <div className="absolute -right-8 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-gray-900 rounded-full" />
 
               {/* Ticket */}
               <div

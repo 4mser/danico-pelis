@@ -225,7 +225,7 @@ export default function HomePage({ isHomeSection }: HomePageProps) {
   const displayed = showAllResults ? tmdbMovies : firstThree;
 
   return (
-    <div className="bg-black">
+    <div className="">
       {/* Header y búsqueda */}
       <header className="bg-gradient-to-b from-gray-800 to-transparent py-6">
         <div className="max-w-6xl mx-auto px-4">
