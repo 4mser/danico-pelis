@@ -87,7 +87,7 @@ export default function FoodPage() {
   , [items, statusFilter, heartFilter, search]);
 
   const Skeleton = () => (
-    <div className="animate-pulse bg-gray-700 rounded-xl h-48 w-full" />
+    <div className="animate-pulse bg-gray-700 rounded-xl h-60 w-full" />
   );
 
   return (
@@ -138,11 +138,11 @@ export default function FoodPage() {
                       p.bought ? 'bg-green-500' : 'bg-gray-700 hover:bg-gray-600'
                     }`}
                   >
-                    {togBought[p._id] ? <Spinner size="sm"/> : <FiCheck className="text-white"/>}
+                    {togBought[p._id] ? <Spinner size="sm"/> : <FiCheck className="text-white text-2xl"/>}
                   </button>
 
                   {/* Corazones / picker */}
-                  <div className="absolute top-11 right-2">
+                  <div className="absolute top-[52px] right-2 ">
                     {both ? (
                       <div className="relative">
                         <motion.button
@@ -150,18 +150,18 @@ export default function FoodPage() {
                           onClick={() => setPickerId(pid => pid === p._id ? null : p._id)}
                           className="p-1 bg-gray-700 rounded-full hover:bg-gray-600"
                         >
-                          <Icon icon="fluent-emoji-flat:revolving-hearts" width="28" height="28" />
+                          <Icon icon="fluent-emoji-flat:revolving-hearts" width="32" height="32" />
                         </motion.button>
                         {pickerId === p._id && (
                           <div
-                            className="absolute top-10 right-0 flex bg-gray-700 rounded-full px-2 py-1 space-x-2 shadow-lg"
+                            className="absolute top-12 right-0 flex bg-gray-700 rounded-full px-2 py-1 space-x-2 shadow-lg"
                             onClick={e => e.stopPropagation()}
                           >
                             <button onClick={() => handleLike(p, 'Barbara')}>
-                              <Icon icon="fluent-emoji-flat:pink-heart"  width="28" height="28" />
+                              <Icon icon="fluent-emoji-flat:pink-heart"  width="32" height="32" />
                             </button>
                             <button onClick={() => handleLike(p, 'Nico')}>
-                              <Icon icon="fluent-emoji-flat:black-heart" width="28" height="28" />
+                              <Icon icon="fluent-emoji-flat:black-heart" width="32" height="32" />
                             </button>
                           </div>
                         )}
@@ -176,7 +176,7 @@ export default function FoodPage() {
                         >
                           <Icon
                             icon="fluent-emoji-flat:pink-heart"
-                            width="24" height="24"
+                            width="32" height="32"
                             className={p.likeBarbara ? 'text-pink-400' : 'opacity-50'}
                           />
                         </motion.button>
@@ -188,7 +188,7 @@ export default function FoodPage() {
                         >
                           <Icon
                             icon="fluent-emoji-flat:black-heart"
-                            width="24" height="24"
+                            width="32" height="32"
                             className={p.likeNico ? 'text-white' : 'opacity-50'}
                           />
                         </motion.button>
