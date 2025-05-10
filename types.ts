@@ -21,3 +21,15 @@ export interface Coupon {
   description: string;
   redeemed: boolean;
 }
+
+
+export interface Product {
+  _id: string;
+  name: string;
+  image: string;
+  bought: boolean;
+  likeNico: boolean;
+  likeBarbara: boolean;
+  likeBoth: boolean;
+
+}

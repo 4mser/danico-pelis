@@ -11,7 +11,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "axios": "^1.7.9",
-    "framer-motion": "^12.6.3",
+    "framer-motion": "^12.10.5",
     "lodash": "^4.17.21",
     "next": "15.1.7",
     "react": "^19.0.0",
@@ -20,6 +20,7 @@
     "swiper": "^11.2.6"
   },
   "devDependencies": {
+    "@iconify/react": "^6.0.0",
     "@types/lodash": "^4.17.15",
     "@types/node": "^20",
     "@types/react": "^19",

@@ -1,6 +1,6 @@
 // src/api.ts
 
-import { AppMovie, Coupon, ListType, TMDBMovie } from '@/types';
+import { AppMovie, Coupon, ListType, Product, TMDBMovie } from '@/types';
 import axios from 'axios';
 
 
@@ -134,5 +134,91 @@ export const deleteCoupon = async (id: string): Promise<void> => {
   } catch (error) {
     console.error('Error deleting coupon:', error);
     throw new Error('Error al eliminar cupón');
+  }
+};
+
+
+
+// ===== Funciones de productos =====
+
+/**
+ * Obtiene todos los productos
+ */
+export const getProducts = async (): Promise<Product[]> => {
+  try {
+    const res = await axios.get<Product[]>(`${API_URL}/products`);
+    return res.data;
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw new Error('Error al obtener productos');
+  }
+};
+
+/**
+ * Crea un nuevo producto
+ */
+export const createProduct = async (
+  name: string,
+  image: string
+): Promise<Product> => {
+  try {
+    const res = await axios.post<Product>(`${API_URL}/products`, {
+      name,
+      image,
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Error creating product:', error);
+    throw new Error('Error al crear producto');
+  }
+};
+
+/**
+ * Actualiza nombre, url de imagen o estado “bought” de un producto
+ */
+// src/services/api.ts
+// …
+export const updateProduct = async (
+  id: string,
+  data: Partial<{
+    name: string;
+    image: string;
+    bought: boolean;
+    likeNico: boolean;
+    likeBarbara: boolean;
+  }>
+): Promise<Product> => {
+  const res = await axios.patch<Product>(`${API_URL}/products/${id}`, data);
+  return res.data;
+};
+
+
+/**
+ * Marca o desmarca un producto como comprado
+ */
+export const toggleProductBought = async (
+  id: string,
+  bought: boolean
+): Promise<Product> => {
+  try {
+    const res = await axios.patch<Product>(`${API_URL}/products/${id}`, {
+      bought,
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Error toggling product bought:', error);
+    throw new Error('Error al actualizar estado de compra');
+  }
+};
+
+/**
+ * Elimina un producto
+ */
+export const deleteProduct = async (id: string): Promise<void> => {
+  try {
+    await axios.delete(`${API_URL}/products/${id}`);
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw new Error('Error al eliminar producto');
   }
 };
