@@ -70,7 +70,7 @@ export default function AdminFoodPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white">
+    <div className="flex flex-col h-[100dvh] bg-black text-white">
       <div className="flex-1 overflow-y-auto max-w-3xl mx-auto p-6 space-y-6">
         <Link href="/" className="text-gray-400 hover:underline">
           ← Volver al Home
