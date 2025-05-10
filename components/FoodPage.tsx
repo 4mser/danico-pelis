@@ -79,13 +79,13 @@ export default function FoodPage() {
 
       {/* CONTENIDO SCROLLABLE */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="p-4 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {visible.map(product => {
             const bought = boughtSet.has(product.id);
             return (
               <div
                 key={product.id}
-                className="relative bg-gray-900 rounded-lg shadow-lg overflow-hidden hover:scale-[1.02] transition-transform"
+                className="relative bg-gray-900 rounded-lg shadow-lg overflow-hidden md:hover:scale-[1.02] transition-transform"
               >
                 <img
                   src={product.image}
@@ -104,7 +104,7 @@ export default function FoodPage() {
                 </button>
                 <div className="p-3">
                   <h3
-                    className={`text-white font-semibold text-lg 
+                    className={`text-white font-semibold text-base 
                       ${bought ? 'line-through text-gray-500' : ''}
                     `}
                   >
