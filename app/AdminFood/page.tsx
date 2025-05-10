@@ -126,23 +126,23 @@ export default function AdminFoodPage() {
                     />
                     <span className="font-medium">{p.name}</span>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <button
                       onClick={() => startEdit(p)}
-                      className="px-2 py-1 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-sm flex items-center gap-1"
+                      className=" rounded-full  hover:text-blue-500 text-white text-sm flex items-center gap-1"
                     >
-                      <FiEdit2 /> Editar
+                      <FiEdit2 />
                     </button>
                     <button
                       onClick={() => handleDelete(p._id)}
                       disabled={actionLoading[p._id]}
-                      className="px-2 py-1 rounded-full bg-red-600 hover:bg-red-500 text-white text-sm flex items-center gap-1"
+                      className=" rounded-full  text-red-500  text-sm flex items-center gap-1"
                     >
                       {actionLoading[p._id] ? (
                         <Spinner size="sm" />
                       ) : (
                         <>
-                          <FiTrash2 /> Eliminar
+                          <FiTrash2 />
                         </>
                       )}
                     </button>
