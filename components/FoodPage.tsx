@@ -150,7 +150,7 @@ export default function FoodPage() {
                           onClick={() => setPickerId(pid => pid === p._id ? null : p._id)}
                           className="p-1 bg-gray-700 rounded-full hover:bg-gray-600"
                         >
-                          <Icon icon="fluent-emoji-flat:revolving-hearts" width="32" height="32" />
+                          <Icon icon="fluent-emoji:revolving-hearts" width="32" height="32" />
                         </motion.button>
                         {pickerId === p._id && (
                           <div
@@ -158,10 +158,10 @@ export default function FoodPage() {
                             onClick={e => e.stopPropagation()}
                           >
                             <button onClick={() => handleLike(p, 'Barbara')}>
-                              <Icon icon="fluent-emoji-flat:pink-heart"  width="32" height="32" />
+                              <Icon icon="fluent-emoji:pink-heart"  width="32" height="32" />
                             </button>
                             <button onClick={() => handleLike(p, 'Nico')}>
-                              <Icon icon="fluent-emoji-flat:black-heart" width="32" height="32" />
+                              <Icon icon="fluent-emoji:light-blue-heart" width="32" height="32" />
                             </button>
                           </div>
                         )}
@@ -175,9 +175,9 @@ export default function FoodPage() {
                           className="p-1 bg-gray-700 shadow-md rounded-full hover:bg-gray-600"
                         >
                           <Icon
-                            icon="fluent-emoji-flat:pink-heart"
+                            icon="fluent-emoji:pink-heart"
                             width="32" height="32"
-                            className={p.likeBarbara ? 'text-pink-400' : 'opacity-50'}
+                            className={p.likeBarbara ? 'text-pink-400' : 'opacity-50 hover:opacity-90'}
                           />
                         </motion.button>
                         <motion.button
@@ -187,9 +187,9 @@ export default function FoodPage() {
                           className="p-1 bg-gray-700 shadow-md rounded-full hover:bg-gray-600"
                         >
                           <Icon
-                            icon="fluent-emoji-flat:black-heart"
+                            icon="fluent-emoji:light-blue-heart"
                             width="32" height="32"
-                            className={p.likeNico ? 'text-white' : 'opacity-50'}
+                            className={p.likeNico ? 'text-white' : 'opacity-50 hover:opacity-90'}
                           />
                         </motion.button>
                       </div>
@@ -260,9 +260,9 @@ export default function FoodPage() {
               {/* Corazones */}
               <div className="flex space-x-4 justify-center">
                 {([
-                  { key: 'Barbara', icon: 'fluent-emoji-flat:pink-heart',  label: 'Bárbara' },
-                  { key: 'Nico',     icon: 'fluent-emoji-flat:black-heart', label: 'Nico'    },
-                  { key: 'Both',     icon: 'fluent-emoji-flat:revolving-hearts', label: 'Ambos' },
+                  { key: 'Barbara', icon: 'fluent-emoji:pink-heart',  label: 'Bárbara' },
+                  { key: 'Nico',     icon: 'fluent-emoji:light-blue-heart', label: 'Nico'    },
+                  { key: 'Both',     icon: 'fluent-emoji:revolving-hearts', label: 'Ambos' },
                 ] as const).map(f => (
                   <button
                     key={f.key}
