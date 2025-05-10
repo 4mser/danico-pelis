@@ -94,7 +94,7 @@ export default function FoodPage() {
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-black text-white">
+    <div className="min-h-screen flex flex-col bg-black text-white">
       {/* ====== FILTROS ====== */}
       <header className="bg-gray-950 p-4 sticky top-0 z-10 space-y-3">
         {/* Buscador */}
@@ -147,7 +147,7 @@ export default function FoodPage() {
       </header>
 
       {/* ====== GRID DE PRODUCTOS ====== */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 p-4">
         {visible.length === 0 ? (
           <p className="text-center text-gray-400">No hay productos.</p>
         ) : (
@@ -204,12 +204,11 @@ export default function FoodPage() {
                         )}
                       </div>
                     ) : (
-                        <div className='flex gap-1 flex-col'>
-                          <motion.button
+                      <div className="flex gap-1 flex-col">
+                        <motion.button
                           whileTap={{ scale: 1.1 }}
                           onClick={() => handleLike(p, 'Barbara')}
                           disabled={togHeart[p._id]}
-                          className=""
                         >
                           <Icon
                             icon="fluent-emoji-flat:pink-heart"
@@ -221,7 +220,6 @@ export default function FoodPage() {
                           whileTap={{ scale: 1.1 }}
                           onClick={() => handleLike(p, 'Nico')}
                           disabled={togHeart[p._id]}
-                          className=""
                         >
                           <Icon
                             icon="fluent-emoji-flat:black-heart"
@@ -229,7 +227,7 @@ export default function FoodPage() {
                             className={p.likeNico ? '' : 'opacity-50'}
                           />
                         </motion.button>
-                        </div>
+                      </div>
                     )}
                   </div>
 
