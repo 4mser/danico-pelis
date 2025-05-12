@@ -18,17 +18,18 @@ const OWNERS: Owner[] = ['Barbara', 'Nico'];
 
 export default function AdminCuponesPage() {
   // — Crear cupón —
-  const [title, setTitle]       = useState('');
-  const [desc, setDesc]         = useState('');
-  const [owner, setOwner]       = useState<Owner>('Barbara');
-  const [reusable, setReusable] = useState(false); // ← checkbox “Reutilizable”
-  const [creating, setCreating] = useState(false);
+  const [title, setTitle]             = useState('');
+  const [desc, setDesc]               = useState('');
+  const [owner, setOwner]             = useState<Owner>('Barbara');
+  const [reusable, setReusable]       = useState(false);
+  const [expirationDate, setExpirationDate] = useState<string>(''); // ← nueva state
+  const [creating, setCreating]       = useState(false);
 
   // — Listar —
-  const [listOwner, setListOwner]   = useState<Owner>('Barbara');
-  const [coupons, setCoupons]       = useState<(Coupon & { _tempLoading?: boolean })[]>([]);
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState<string|null>(null);
+  const [listOwner, setListOwner]     = useState<Owner>('Barbara');
+  const [coupons, setCoupons]         = useState<(Coupon & { _tempLoading?: boolean })[]>([]);
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState<string|null>(null);
 
   // Carga inicial y al cambiar propietario
   useEffect(() => {
@@ -51,13 +52,15 @@ export default function AdminCuponesPage() {
     setCreating(true);
     setError(null);
     try {
-      const newC = await createCoupon(title, desc, owner, reusable);
+      const iso = expirationDate ? new Date(expirationDate).toISOString() : undefined;
+      const newC = await createCoupon(title, desc, owner, reusable, iso);
       if (owner === listOwner) {
         setCoupons(prev => [newC, ...prev]);
       }
       setTitle('');
       setDesc('');
       setReusable(false);
+      setExpirationDate('');  // ← resetea fecha
     } catch {
       setError('Error creando cupón');
     } finally {
@@ -68,23 +71,15 @@ export default function AdminCuponesPage() {
   // Canjear / descanjear
   const handleToggle = async (c: Coupon & { _tempLoading?: boolean }) => {
     setError(null);
-    // guardamos si era reutilizable antes de cambiar nada
     const wasReusable = c.reusable;
-
-    // flag de loading
     setCoupons(prev =>
       prev.map(x => x._id === c._id ? { ...x, _tempLoading: true } : x)
     );
-
     try {
-      // llamamos al back
       await redeemCoupon(c._id, !c.redeemed);
-
       if (!wasReusable) {
-        // NO reutilizable: lo eliminamos de la UI
         setCoupons(prev => prev.filter(x => x._id !== c._id));
       } else {
-        // reutilizable: solo actualizamos el flag `redeemed`
         setCoupons(prev =>
           prev.map(x =>
             x._id === c._id
@@ -95,7 +90,6 @@ export default function AdminCuponesPage() {
       }
     } catch {
       setError('Error actualizando estado');
-      // quitamos el loading flag si falla
       setCoupons(prev =>
         prev.map(x =>
           x._id === c._id ? { ...x, _tempLoading: false } : x
@@ -169,6 +163,17 @@ export default function AdminCuponesPage() {
             className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 h-20 resize-none"
           />
 
+          {/* Fecha/Hora opcional */}
+          <div className="flex flex-col">
+            <label className="text-sm mb-1">Fecha de expiración (opcional)</label>
+            <input
+              type="datetime-local"
+              value={expirationDate}
+              onChange={e => setExpirationDate(e.target.value)}
+              className="bg-gray-700 border border-gray-600 rounded px-3 py-2"
+            />
+          </div>
+
           <button
             type="submit"
             disabled={creating}
@@ -224,6 +229,11 @@ export default function AdminCuponesPage() {
                     <p className={`text-gray-400 text-sm sm:text-base ${c.redeemed ? 'line-through' : ''}`}>
                       {c.description}
                     </p>
+                    {c.expirationDate && (
+                      <p className="text-xs text-yellow-300 mt-1">
+                        ⏳ {new Date(c.expirationDate).toLocaleString()}
+                      </p>
+                    )}
                     {c.reusable ? (
                       <span className="inline-block text-xs text-green-400 mt-3">
                         ♻️ Reutilizable

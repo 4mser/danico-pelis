@@ -12,8 +12,14 @@ import type { Coupon } from '@/types';
 type Owner = 'Barbara' | 'Nico';
 const OWNERS: Owner[] = ['Barbara', 'Nico'];
 
-const listVariants = { hidden: {}, show: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } } };
-const itemVariants = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } } };
+const listVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } },
+};
+const itemVariants = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+};
 
 export default function CouponsPage() {
   const router = useRouter();
@@ -22,8 +28,10 @@ export default function CouponsPage() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState<string|null>(null);
   const [toggling, setToggling] = useState<Record<string,boolean>>({});
+  const [timers, setTimers]     = useState<Record<string,string>>({});
   const cache = useRef<Partial<Record<Owner,Coupon[]>>>({});
 
+  // Carga de cupones
   useEffect(() => {
     let mounted = true;
     setError(null);
@@ -45,17 +53,40 @@ export default function CouponsPage() {
     return () => { mounted = false };
   }, [owner]);
 
+  // Intervalo para cuenta regresiva
+  useEffect(() => {
+    const iv = setInterval(() => {
+      const now = Date.now();
+      const newTimers: Record<string,string> = {};
+      coupons.forEach(c => {
+        if (c.expirationDate) {
+          const diff = new Date(c.expirationDate).getTime() - now;
+          if (diff <= 0) {
+            newTimers[c._id] = 'Expirado';
+          } else {
+            const days    = Math.floor(diff / (1000*60*60*24));
+            const hours   = Math.floor(diff / (1000*60*60) % 24);
+            const minutes = Math.floor(diff / (1000*60) % 60);
+            const seconds = Math.floor((diff / 1000) % 60);
+            newTimers[c._id] = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+          }
+        }
+      });
+      setTimers(newTimers);
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [coupons]);
+
+  // Canjear
   const handleToggle = async (c: Coupon) => {
     if (c.redeemed) return;
     setToggling(t => ({ ...t, [c._id]: true }));
     try {
       const result = await redeemCoupon(c._id, true);
       if ('deleted' in result) {
-        // backend borró el cupón no reusable → lo filtramos
         setCoupons(prev => prev.filter(x => x._id !== c._id));
         cache.current[owner] = cache.current[owner]!.filter(x => x._id !== c._id);
       } else {
-        // backend devolvió el coupon actualizado (reusable)
         setCoupons(prev =>
           prev.map(x => x._id === result._id ? result : x)
         );
@@ -68,7 +99,7 @@ export default function CouponsPage() {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-[80dvh]"><Spinner size="lg"/></div>;
+  if (loading) return <div className="flex items-center justify-center h-[80dvh]"><Spinner size="lg" /></div>;
   if (error)   return <div className="text-red-500 text-center py-8">⚠️ {error}</div>;
 
   return (
@@ -92,6 +123,7 @@ export default function CouponsPage() {
             </button>
           ))}
         </div>
+
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           variants={listVariants}
@@ -125,6 +157,13 @@ export default function CouponsPage() {
                   <p className={`text-gray-300 text-base mb-2 ${c.redeemed ? 'line-through' : ''}`}>
                     {c.description}
                   </p>
+
+                  {c.expirationDate && (
+                    <p className="text-sm text-yellow-300 mb-2">
+                      ⏳ Expira en: {timers[c._id] || 'calculando...'}
+                    </p>
+                  )}
+
                   {c.reusable ? (
                     <span className="inline-block text-xs text-green-400 mb-4">
                       ♻️ Reutilizable
@@ -134,6 +173,7 @@ export default function CouponsPage() {
                       ⚡️ Único
                     </span>
                   )}
+
                   <div className="flex justify-between items-center">
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${bgColor}`}>
                       <span className={`w-2 h-2 rounded-full mr-1 ${dotColor}`} />
