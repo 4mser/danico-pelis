@@ -10,7 +10,7 @@ import type {
   Pet,
 } from '@/types';
 
-const API_URL = 'https://pelis-danico-production.up.railway.app';
+export const API_URL = 'https://pelis-danico-production.up.railway.app';
 
 /** ——— Mascota ——— */
 export const getPet = async (): Promise<Pet> => {

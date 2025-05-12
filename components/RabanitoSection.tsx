@@ -5,9 +5,8 @@ import React, { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Pet, InteractionType } from '@/types';
-import { getPet } from '@/services/api';
+import { API_URL, getPet } from '@/services/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 const interactionLabels: Record<InteractionType, string> = {
   addMovie:     'añadieron una película',
@@ -71,6 +70,19 @@ export default function RabanitoSection() {
       <h2 className="text-3xl font-extrabold text-center text-gray-900 dark:text-white">
         🐇 Rabanito
       </h2>
+      <div className="sketchfab-embed-wrapper w-full aspect-video rounded-xl overflow-hidden shadow-md">
+  <iframe
+    title="Minecraft custom rabbit pet"
+    allow="autoplay; fullscreen; xr-spatial-tracking"
+    allowFullScreen
+    src="https://sketchfab.com/models/6854563c372c42149f392cd79e0c140f/embed?autostart=1"
+    className="w-full h-full"
+    data-xr-spatial-tracking
+    data-execution-while-out-of-viewport
+    data-execution-while-not-rendered
+    data-web-share
+  />
+</div>
 
       <AnimatePresence mode="wait">
         <motion.p

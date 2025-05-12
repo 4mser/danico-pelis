@@ -123,7 +123,7 @@ export default function FoodPage() {
       </header>
 
       {/* Productos */}
-      <main className="flex-1 overflow-y-auto p-4">
+      <main className="flex-1 overflow-y-auto p-4 pb-20">
         {loading ? (
           <div className="w-full h-[70dvh] flex items-center justify-center">
             <Spinner size="lg" />

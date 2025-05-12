@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import HomePage from '@/components/HomePage';
 import CouponsPage from '@/components/CouponsPage';
 import FoodPage from '@/components/FoodPage';
-import BobSection from '@/components/BobSection';
+import RabanitoSection from '@/components/RabanitoSection';
 
 export default function Page() {
   const [section, setSection] = useState<
@@ -18,7 +18,7 @@ export default function Page() {
         {section === 'pelis'   && <HomePage isHomeSection={true} />}
         {section === 'cupones' && <CouponsPage />}
         {section === 'comida'  && <FoodPage />}
-        {section === 'bob'     && <BobSection />}
+        {section === 'bob'     && <RabanitoSection />}
       </div>
 
       {/* MENÚ INFERIOR */}
