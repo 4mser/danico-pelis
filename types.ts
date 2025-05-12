@@ -34,3 +34,35 @@ export interface Product {
   likeBoth: boolean;
 
 }
+
+
+/** Nuevos tipos para la mascota */
+
+
+/** Tipos para las interacciones que Rabanito maneja */
+/** Tipos para las interacciones que Rabanito maneja */
+export type InteractionType =
+  | 'addMovie'
+  | 'markWatched'
+  | 'deleteMovie'
+  | 'addProduct'
+  | 'buyProduct'
+  | 'likeOne'
+  | 'likeBoth'
+  | 'addCoupon'
+  | 'redeemCoupon';
+
+/** Representación de la mascota en la DB y el frontend */
+export interface Pet {
+  _id: string;
+  name: string;
+  happiness: number;
+  energy: number;
+  curiosity: number;
+  lastInteractionAt: string;
+  lastInteractionType: InteractionType | null;
+  /** ← agregamos esta línea */
+  lastMessage: string;
+  createdAt: string;
+  updatedAt: string;
+}
