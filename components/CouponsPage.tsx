@@ -60,8 +60,10 @@ export default function CouponsPage() {
     if (c.redeemed) return;
     setToggling(p => ({ ...p, [c._id]: true }));
     try {
-      const updated = await redeemCoupon(c._id, true);
-      setCoupons(prev => prev.map(x => x._id === updated._id ? updated : x));
+      const updated = await redeemCoupon(c._id, !c.redeemed);
+      setCoupons(prev =>
+        prev.map(x => x._id === updated._id ? updated : x)
+      );
       cacheRef.current[owner] = cacheRef.current[owner]!.map(x =>
         x._id === updated._id ? updated : x
       );
@@ -80,8 +82,8 @@ export default function CouponsPage() {
   );
 
   return (
-    <div className="bg-gray-900 relative ">
-      <div className="px-4 pt-7  sm:max-w-3xl mx-auto space-y-6 pb-20">
+    <div className="bg-gray-900 relative">
+      <div className="px-4 pt-7 sm:max-w-3xl mx-auto space-y-6 pb-20">
 
         <h1 className="text-3xl font-bold text-white text-center">Cupones 🎟️</h1>
 
@@ -111,56 +113,67 @@ export default function CouponsPage() {
           initial="hidden"
           animate="show"
         >
-          {coupons.map(c => (
-            <motion.div
-              key={c._id}
-              className="relative"
-              variants={itemVariants}
-              layout  // anima reordenos suavemente
-            >
-              <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-gray-900 rounded-full" />
-              <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-gray-900 rounded-full" />
+          {coupons.map(c => {
+            const isLoading = toggling[c._id];
+            const bgColor = c.owner === 'Barbara' ? 'bg-pink-800' : 'bg-blue-900';
+              const dotColor = c.owner === 'Barbara' ? 'bg-pink-300' : 'bg-blue-300';;
 
-              <div className={`
-                bg-gradient-to-br from-gray-800 to-transparent
-                border-2 border-dashed border-gray-600
-                rounded-lg p-6 shadow-lg hover:bg-gray-700
-                ${c.redeemed ? 'opacity-50' : 'opacity-100'}
-              `}>
-                <h3 className={`text-2xl font-semibold text-white mb-2 ${c.redeemed ? 'line-through' : ''}`}>
-                  {c.title}
-                </h3>
-                <p className={`text-gray-300 text-base mb-4 ${c.redeemed ? 'line-through' : ''}`}>
-                  {c.description}
-                </p>
-                <div className="flex justify-end items-center gap-3">
-                  {toggling[c._id] ? (
-                    <Spinner size="sm" />
-                  ) : (
-                    <label className="inline-flex items-center gap-2 cursor-pointer">
-                      <span className="text-gray-200">
-                        {c.redeemed ? 'Canjeado' : 'Canjear'}
-                      </span>
-                      <input
-                        type="checkbox"
-                        className="sr-only peer"
-                        checked={c.redeemed}
-                        disabled={c.redeemed}
-                        onChange={() => handleToggle(c)}
-                      />
-                      <div className={`
-                        w-10 h-5 rounded-full bg-gray-600 peer-focus:ring-2 peer-focus:ring-purple-500
-                        relative before:content-[''] before:absolute before:top-0.5 before:left-0.5
-                        before:bg-white before:border before:border-gray-300 before:rounded-full
-                        before:h-4 before:w-4 before:transition-all
-                        peer-checked:bg-green-600 peer-checked:before:translate-x-full
-                      `} />
-                    </label>
-                  )}
+            return (
+              <motion.div
+                key={c._id}
+                className="relative"
+                variants={itemVariants}
+                layout
+              >
+                <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-gray-900 rounded-full" />
+                <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-gray-900 rounded-full" />
+
+                <div className={`
+                  bg-gradient-to-br from-gray-800 to-transparent
+                  border-2 border-dashed border-gray-600
+                  rounded-lg p-6 shadow-lg hover:bg-gray-700
+                  ${c.redeemed ? 'opacity-50' : 'opacity-100'}
+                `}>
+                  <h3 className={`text-2xl font-semibold text-white mb-2 ${c.redeemed ? 'line-through' : ''}`}>
+                    {c.title}
+                  </h3>
+                  <p className={`text-gray-300 text-base mb-4 ${c.redeemed ? 'line-through' : ''}`}>
+                    {c.description}
+                  </p>
+
+                  <div className="flex justify-between items-center">
+                    {/* Tag de owner */}
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${bgColor}`}>
+                      <span className={`w-2 h-2 rounded-full mr-1 ${dotColor}`} />
+                      {c.owner}
+                    </span>
+
+                    {/* Switch de canjear */}
+                    {isLoading ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      <label className="relative inline-flex gap-2 items-center cursor-pointer">
+                        canjear
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={c.redeemed}
+                          onChange={() => handleToggle(c)}
+                        />
+                        <div className={`
+                          w-11 h-6 rounded-full bg-gray-600 peer-focus:ring-2 peer-focus:ring-purple-500
+                          peer-checked:bg-green-600 peer-disabled:opacity-50
+                          relative before:content-[''] before:absolute before:top-0.5 before:left-0.5
+                          before:bg-white before:border before:border-gray-300 before:rounded-full
+                          before:h-5 before:w-5 before:transition-all peer-checked:before:translate-x-full
+                        `} />
+                      </label>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </motion.div>
       </div>
 
