@@ -82,8 +82,8 @@ export default function CouponsPage() {
   );
 
   return (
-    <div className="bg-gray-900 relative">
-      <div className="px-4 pt-7 sm:max-w-3xl mx-auto space-y-6 pb-20">
+    <div className="bg-gray-900 relative overflow-x-hidden">
+      <div className="px-4 pt-7  space-y-6 pb-20">
 
         <h1 className="text-3xl font-bold text-white text-center">Cupones de {owner} 🎟️</h1>
 
