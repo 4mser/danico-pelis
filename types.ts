@@ -22,6 +22,7 @@ export interface Coupon {
   description: string;
   redeemed: boolean;
   owner: string;
+  reusable: boolean;
 }
 
 

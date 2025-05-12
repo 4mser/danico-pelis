@@ -12,81 +12,71 @@ import type { Coupon } from '@/types';
 type Owner = 'Barbara' | 'Nico';
 const OWNERS: Owner[] = ['Barbara', 'Nico'];
 
-// Variantes más sutiles
-const listVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } },
-};
-const itemVariants = {
-  hidden: { opacity: 0, y: 10 },
-  show:  { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
-};
+const listVariants = { hidden: {}, show: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } } };
+const itemVariants = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } } };
 
 export default function CouponsPage() {
   const router = useRouter();
-  const [owner, setOwner] = useState<Owner>(OWNERS[0]);
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [toggling, setToggling] = useState<Record<string, boolean>>({});
-  const cacheRef = useRef<Partial<Record<Owner, Coupon[]>>>({});
+  const [owner, setOwner]       = useState<Owner>(OWNERS[0]);
+  const [coupons, setCoupons]   = useState<Coupon[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string|null>(null);
+  const [toggling, setToggling] = useState<Record<string,boolean>>({});
+  const cache = useRef<Partial<Record<Owner,Coupon[]>>>({});
 
-  // Carga optimizada con caché
   useEffect(() => {
     let mounted = true;
     setError(null);
-
-    const cached = cacheRef.current[owner];
+    const cached = cache.current[owner];
     if (cached) {
       setCoupons(cached);
       setLoading(false);
       return;
     }
-
     setLoading(true);
     getCoupons(owner)
       .then(data => {
         if (!mounted) return;
-        cacheRef.current[owner] = data;
+        cache.current[owner] = data;
         setCoupons(data);
       })
       .catch(() => mounted && setError('Error cargando cupones'))
       .finally(() => mounted && setLoading(false));
-
     return () => { mounted = false };
   }, [owner]);
 
   const handleToggle = async (c: Coupon) => {
     if (c.redeemed) return;
-    setToggling(p => ({ ...p, [c._id]: true }));
+    setToggling(t => ({ ...t, [c._id]: true }));
     try {
-      const updated = await redeemCoupon(c._id, !c.redeemed);
-      setCoupons(prev =>
-        prev.map(x => x._id === updated._id ? updated : x)
-      );
-      cacheRef.current[owner] = cacheRef.current[owner]!.map(x =>
-        x._id === updated._id ? updated : x
-      );
+      const result = await redeemCoupon(c._id, true);
+      if ('deleted' in result) {
+        // backend borró el cupón no reusable → lo filtramos
+        setCoupons(prev => prev.filter(x => x._id !== c._id));
+        cache.current[owner] = cache.current[owner]!.filter(x => x._id !== c._id);
+      } else {
+        // backend devolvió el coupon actualizado (reusable)
+        setCoupons(prev =>
+          prev.map(x => x._id === result._id ? result : x)
+        );
+        cache.current[owner] = cache.current[owner]!.map(x =>
+          x._id === result._id ? result : x
+        );
+      }
     } finally {
-      setToggling(p => ({ ...p, [c._id]: false }));
+      setToggling(t => ({ ...t, [c._id]: false }));
     }
   };
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-[80dvh]">
-      <Spinner size="lg" />
-    </div>
-  );
-  if (error) return (
-    <div className="text-red-500 text-center py-8">⚠️ {error}</div>
-  );
+  if (loading) return <div className="flex items-center justify-center h-[80dvh]"><Spinner size="lg"/></div>;
+  if (error)   return <div className="text-red-500 text-center py-8">⚠️ {error}</div>;
 
   return (
     <div className="bg-gray-900 w-full relative overflow-x-hidden">
-      <div className="px-4 pt-7  space-y-6 pb-20">
-
-        <h1 className="text-3xl font-bold text-white text-center">Cupones de {owner} 🎟️</h1>
-
+      <div className="px-4 pt-7 space-y-6 pb-20">
+        <h1 className="text-3xl font-bold text-white text-center">
+          Cupones de {owner} 🎟️
+        </h1>
         <div className="flex justify-center gap-2">
           {OWNERS.map(o => (
             <button
@@ -102,9 +92,6 @@ export default function CouponsPage() {
             </button>
           ))}
         </div>
-
-       
-
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           variants={listVariants}
@@ -112,9 +99,9 @@ export default function CouponsPage() {
           animate="show"
         >
           {coupons.map(c => {
-            const isLoading = toggling[c._id];
-            const bgColor = c.owner === 'Barbara' ? 'bg-pink-800' : 'bg-blue-900';
-              const dotColor = c.owner === 'Barbara' ? 'bg-pink-300' : 'bg-blue-300';;
+            const loadingToggle = toggling[c._id];
+            const bgColor  = c.owner === 'Barbara' ? 'bg-pink-800' : 'bg-blue-900';
+            const dotColor = c.owner === 'Barbara' ? 'bg-pink-300' : 'bg-blue-300';
 
             return (
               <motion.div
@@ -129,25 +116,31 @@ export default function CouponsPage() {
                 <div className={`
                   bg-gradient-to-br from-gray-800 to-transparent
                   border-2 border-dashed border-gray-600
-                  rounded-lg p-6 shadow-lg 
+                  rounded-lg p-6 shadow-lg
                   ${c.redeemed ? 'opacity-50' : 'opacity-100'}
                 `}>
                   <h3 className={`text-2xl font-semibold text-white mb-2 ${c.redeemed ? 'line-through' : ''}`}>
                     {c.title}
                   </h3>
-                  <p className={`text-gray-300 text-base mb-4 ${c.redeemed ? 'line-through' : ''}`}>
+                  <p className={`text-gray-300 text-base mb-2 ${c.redeemed ? 'line-through' : ''}`}>
                     {c.description}
                   </p>
-
+                  {c.reusable ? (
+                    <span className="inline-block text-xs text-green-400 mb-4">
+                      ♻️ Reutilizable
+                    </span>
+                  ) : (
+                    <span className="inline-block text-xs text-yellow-500 mb-4">
+                      ⚡️ Único
+                    </span>
+                  )}
                   <div className="flex justify-between items-center">
-                    {/* Tag de owner */}
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${bgColor}`}>
                       <span className={`w-2 h-2 rounded-full mr-1 ${dotColor}`} />
                       {c.owner}
                     </span>
 
-                    {/* Switch de canjear */}
-                    {isLoading ? (
+                    {loadingToggle ? (
                       <Spinner size="sm" />
                     ) : (
                       <label className="relative inline-flex gap-2 items-center cursor-pointer">
@@ -159,11 +152,14 @@ export default function CouponsPage() {
                           onChange={() => handleToggle(c)}
                         />
                         <div className={`
-                          w-11 h-6 rounded-full bg-gray-600 peer-focus:ring-2 peer-focus:ring-purple-500
+                          w-11 h-6 rounded-full bg-gray-600
+                          peer-focus:ring-2 peer-focus:ring-purple-500
                           peer-checked:bg-green-600 peer-disabled:opacity-50
-                          relative before:content-[''] before:absolute before:top-0.5 before:left-0.5
-                          before:bg-white before:border before:border-gray-300 before:rounded-full
-                          before:h-5 before:w-5 before:transition-all peer-checked:before:translate-x-full
+                          relative before:content-[''] before:absolute
+                          before:top-0.5 before:left-0.5
+                          before:bg-white before:border before:border-gray-300
+                          before:rounded-full before:h-5 before:w-5
+                          before:transition-all peer-checked:before:translate-x-full
                         `} />
                       </label>
                     )}

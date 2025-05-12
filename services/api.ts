@@ -75,12 +75,8 @@ export const deleteMovie = async (id: string): Promise<void> => {
   await interactWithPet('deleteMovie');
 };
 
-/** ——— Cupones ——— */
+// Cupones
 
-/**
- * Obtiene todos o los de un owner específico
- * @param owner 'Nico' | 'Barbara'
- */
 export const getCoupons = async (
   owner?: 'Nico' | 'Barbara'
 ): Promise<Coupon[]> => {
@@ -90,43 +86,43 @@ export const getCoupons = async (
   return res.data;
 };
 
-/**
- * Crea un cupón para el owner indicado
- */
 export const createCoupon = async (
   title: string,
   description: string,
-  owner: 'Nico' | 'Barbara'
+  owner: 'Nico' | 'Barbara',
+  reusable: boolean
 ): Promise<Coupon> => {
   const res = await axios.post<Coupon>(`${API_URL}/coupons`, {
     title,
     description,
     owner,
+    reusable,
   });
   await interactWithPet('addCoupon');
   return res.data;
 };
 
 /**
- * Marca como canjeado/descanjeado
+ * Devuelve:
+ *  - Coupon actualizado (si reusable=true)
+ *  - { deleted: true }       (si reusable=false)
  */
 export const redeemCoupon = async (
   id: string,
   redeemed: boolean,
-): Promise<Coupon> => {
-  const res = await axios.patch<Coupon>(
+): Promise<Coupon | { deleted: true }> => {
+  const res = await axios.patch<Coupon | { deleted: true }>(
     `${API_URL}/coupons/${id}/redeem`,
     { redeemed },
   );
-  if (redeemed) {
-    await interactWithPet('redeemCoupon');
-  }
+  if (redeemed) await interactWithPet('redeemCoupon');
   return res.data;
 };
 
 export const deleteCoupon = async (id: string): Promise<void> => {
   await axios.delete(`${API_URL}/coupons/${id}`);
 };
+
 
 /** ——— Productos ——— */
 

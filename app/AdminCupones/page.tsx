@@ -18,71 +18,84 @@ const OWNERS: Owner[] = ['Barbara', 'Nico'];
 
 export default function AdminCuponesPage() {
   // — Crear cupón —
-  const [createTitle, setCreateTitle] = useState('');
-  const [createDescription, setCreateDescription] = useState('');
-  const [createOwner, setCreateOwner] = useState<Owner>('Barbara');
-  const [createLoading, setCreateLoading] = useState(false);
+  const [title, setTitle]       = useState('');
+  const [desc, setDesc]         = useState('');
+  const [owner, setOwner]       = useState<Owner>('Barbara');
+  const [reusable, setReusable] = useState(false); // ← checkbox “Reutilizable”
+  const [creating, setCreating] = useState(false);
 
-  // — Listar cupones —
-  const [listOwner, setListOwner] = useState<Owner>('Barbara');
-  const [coupons, setCoupons] = useState<(Coupon & { _tempLoading?: boolean })[]>([]);
-  const [listLoading, setListLoading] = useState(false);
+  // — Listar —
+  const [listOwner, setListOwner]   = useState<Owner>('Barbara');
+  const [coupons, setCoupons]       = useState<(Coupon & { _tempLoading?: boolean })[]>([]);
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState<string|null>(null);
 
-  // — Error genérico —
-  const [error, setError] = useState<string | null>(null);
-
-  // Cargar cupones al montar y cuando cambie listOwner
+  // Carga inicial y al cambiar propietario
   useEffect(() => {
     let mounted = true;
-    setListLoading(true);
+    setLoading(true);
     setError(null);
 
     getCoupons(listOwner)
       .then(data => mounted && setCoupons(data))
       .catch(() => mounted && setError('Error cargando cupones'))
-      .finally(() => mounted && setListLoading(false));
+      .finally(() => mounted && setLoading(false));
 
-    return () => { mounted = false; };
+    return () => { mounted = false };
   }, [listOwner]);
 
-  // Manejador de creación
-  const handleSubmit = async (e: FormEvent) => {
+  // Crear un nuevo cupón
+  const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
-    if (!createTitle.trim() || !createDescription.trim()) return;
-    setCreateLoading(true);
+    if (!title.trim() || !desc.trim()) return;
+    setCreating(true);
     setError(null);
-
     try {
-      const newCoupon = await createCoupon(createTitle, createDescription, createOwner);
-      if (createOwner === listOwner) {
-        setCoupons(prev => [newCoupon, ...prev]);
+      const newC = await createCoupon(title, desc, owner, reusable);
+      if (owner === listOwner) {
+        setCoupons(prev => [newC, ...prev]);
       }
-      setCreateTitle('');
-      setCreateDescription('');
+      setTitle('');
+      setDesc('');
+      setReusable(false);
     } catch {
       setError('Error creando cupón');
     } finally {
-      setCreateLoading(false);
+      setCreating(false);
     }
   };
 
-  // Canjear / descanjear inmediatamente
+  // Canjear / descanjear
   const handleToggle = async (c: Coupon & { _tempLoading?: boolean }) => {
     setError(null);
+    // guardamos si era reutilizable antes de cambiar nada
+    const wasReusable = c.reusable;
+
+    // flag de loading
     setCoupons(prev =>
-      prev.map(x =>
-        x._id === c._id ? { ...x, _tempLoading: true } : x
-      )
+      prev.map(x => x._id === c._id ? { ...x, _tempLoading: true } : x)
     );
+
     try {
-      const updated = await redeemCoupon(c._id, !c.redeemed);
-      setCoupons(prev =>
-        prev.map(x =>
-          x._id === updated._id ? { ...updated, _tempLoading: false } : x
-        )
-      );
+      // llamamos al back
+      await redeemCoupon(c._id, !c.redeemed);
+
+      if (!wasReusable) {
+        // NO reutilizable: lo eliminamos de la UI
+        setCoupons(prev => prev.filter(x => x._id !== c._id));
+      } else {
+        // reutilizable: solo actualizamos el flag `redeemed`
+        setCoupons(prev =>
+          prev.map(x =>
+            x._id === c._id
+              ? { ...x, redeemed: !c.redeemed, _tempLoading: false }
+              : x
+          )
+        );
+      }
     } catch {
       setError('Error actualizando estado');
+      // quitamos el loading flag si falla
       setCoupons(prev =>
         prev.map(x =>
           x._id === c._id ? { ...x, _tempLoading: false } : x
@@ -91,10 +104,10 @@ export default function AdminCuponesPage() {
     }
   };
 
-  // Eliminar con confirmación y actualización instantánea
+  // Eliminar manualmente
   const handleDelete = async (id: string) => {
-    setError(null);
     if (!confirm('¿Seguro que quieres eliminar este cupón?')) return;
+    setError(null);
     try {
       await deleteCoupon(id);
       setCoupons(prev => prev.filter(x => x._id !== id));
@@ -107,29 +120,24 @@ export default function AdminCuponesPage() {
     <div className="flex flex-col text-white">
       {/* Header */}
       <header className="flex items-center justify-between p-4">
-        <Link href="/">
-          ← Volver
-        </Link>
-        <div className="w-6" />
+        <Link href="/">← Volver</Link>
       </header>
 
       {/* Contenido */}
       <main className="flex-1 overflow-y-auto p-4 space-y-6">
-
-        {/* Error genérico */}
         {error && (
           <p className="text-red-500 text-center">{error}</p>
         )}
 
         {/* Formulario de creación */}
-        <form onSubmit={handleSubmit} className="space-y-4 bg-gray-800 p-4 rounded-md shadow">
-          <h2 className="text-lg font-semibold">Crear cupón para:</h2>
+        <form onSubmit={handleCreate} className="space-y-4 bg-gray-800 p-4 rounded-md shadow">
+          <h2 className="text-lg font-semibold">Crear cupón</h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <select
-              value={createOwner}
-              onChange={e => setCreateOwner(e.target.value as Owner)}
-              className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+              value={owner}
+              onChange={e => setOwner(e.target.value as Owner)}
+              className="bg-gray-700 border border-gray-600 rounded px-3 py-2"
             >
               {OWNERS.map(o => (
                 <option key={o} value={o}>{o}</option>
@@ -137,34 +145,44 @@ export default function AdminCuponesPage() {
             </select>
 
             <input
-              value={createTitle}
-              onChange={e => setCreateTitle(e.target.value)}
+              value={title}
+              onChange={e => setTitle(e.target.value)}
               placeholder="Título"
-              className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2"
+              className="bg-gray-700 border border-gray-600 rounded px-3 py-2"
             />
+
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={reusable}
+                onChange={e => setReusable(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <span>Reutilizable</span>
+            </label>
           </div>
 
           <textarea
-            value={createDescription}
-            onChange={e => setCreateDescription(e.target.value)}
+            value={desc}
+            onChange={e => setDesc(e.target.value)}
             placeholder="Descripción"
             className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 h-20 resize-none"
           />
 
           <button
             type="submit"
-            disabled={createLoading}
+            disabled={creating}
             className={`w-full py-2 rounded-md font-semibold transition-colors ${
-              createLoading
+              creating
                 ? 'bg-gray-600 cursor-not-allowed'
                 : 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700'
             }`}
           >
-            {createLoading ? 'Creando...' : 'Crear Cupón'}
+            {creating ? 'Creando...' : 'Crear Cupón'}
           </button>
         </form>
 
-        {/* Filtro por owner */}
+        {/* Selector de owner */}
         <div className="flex justify-center gap-3">
           {OWNERS.map(o => (
             <button
@@ -182,53 +200,68 @@ export default function AdminCuponesPage() {
         </div>
 
         {/* Lista de cupones */}
-        {listLoading ? (
+        {loading ? (
           <div className="flex justify-center py-8">
             <Spinner size="lg" />
           </div>
         ) : coupons.length === 0 ? (
-          <p className="text-gray-400 text-center">No hay cupones de {listOwner}.</p>
+          <p className="text-gray-400 text-center">
+            No hay cupones de {listOwner}.
+          </p>
         ) : (
           <ul className="space-y-4">
             {coupons.map(c => {
-              const isLoading = c._tempLoading;
-              const color = c.owner === 'Barbara' ? 'bg-pink-800' : 'bg-blue-900';
-              const dotColor = c.owner === 'Barbara' ? 'bg-pink-300' : 'bg-blue-300';
+              const isLoading = (c as any)._tempLoading;
               return (
                 <li
                   key={c._id}
-                  className="flex flex-col justify-between bg-gray-800 rounded-md p-4 shadow"
+                  className="bg-gray-800 p-4 rounded-md shadow flex flex-col justify-between"
                 >
-                  {/* Contenido */}
                   <div>
-                    <h3 className="text-base sm:text-lg font-semibold">{c.title}</h3>
-                    <p className="text-gray-400 text-sm sm:text-base">{c.description}</p>
+                    <h3 className={`text-base sm:text-lg font-semibold ${c.redeemed ? 'line-through' : ''}`}>
+                      {c.title}
+                    </h3>
+                    <p className={`text-gray-400 text-sm sm:text-base ${c.redeemed ? 'line-through' : ''}`}>
+                      {c.description}
+                    </p>
+                    {c.reusable ? (
+                      <span className="inline-block text-xs text-green-400 mt-3">
+                        ♻️ Reutilizable
+                      </span>
+                    ) : (
+                      <span className="inline-block text-xs text-yellow-500 mt-3">
+                        ⚡️ Único
+                      </span>
+                    )}
                   </div>
 
-                  {/* Footer: tag a la izquierda, acciones a la derecha */}
-                  <div className="mt-4 flex justify-between items-center">
-                    {/* Tag de owner */}
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${color}`}>
-                      <span className={`w-2 h-2 rounded-full mr-1 ${dotColor}`} />
-                      {c.owner}
-                    </span>
+                  <div className="mt-3 flex justify-between items-center">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={c.redeemed}
+                        onChange={() => handleToggle(c)}
+                        disabled={isLoading}
+                      />
+                      <div className={`
+                        w-11 h-6 rounded-full bg-gray-600
+                        peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-purple-500
+                        peer-checked:bg-green-600 peer-disabled:opacity-50
+                        relative before:content-[''] before:absolute
+                        before:top-0.5 before:left-0.5
+                        before:bg-white before:border before:border-gray-300
+                        before:rounded-full before:h-5 before:w-5
+                        before:transition-all peer-checked:before:translate-x-full
+                      `} />
+                    </label>
 
-                    {/* Switch + ícono eliminar */}
-                    <div className="inline-flex items-center space-x-3">
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          checked={c.redeemed}
-                          onChange={() => handleToggle(c as Coupon & { _tempLoading?: boolean })}
-                          disabled={isLoading}
-                        />
-                        <div className={`w-11 h-6 bg-gray-600 peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-purple-500 rounded-full peer-checked:bg-green-600 peer-disabled:opacity-50 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:bg-white before:border before:border-gray-300 before:rounded-full before:h-5 before:w-5 before:transition-all peer-checked:before:translate-x-full`} />
-                      </label>
-                      <button onClick={() => handleDelete(c._id)} className="p-1">
-                        <FiTrash className="text-red-400 hover:text-red-600" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleDelete(c._id)}
+                      className="p-1 text-red-400 hover:text-red-600"
+                    >
+                      <FiTrash />
+                    </button>
                   </div>
                 </li>
               );
