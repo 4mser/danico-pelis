@@ -2,141 +2,216 @@
 'use client';
 
 import React, { useState, useEffect, FormEvent } from 'react';
+import Link from 'next/link';
+import { Spinner } from '@/app/spinner';
 import {
   getCoupons,
   createCoupon,
   redeemCoupon,
   deleteCoupon,
 } from '@/services/api';
-import { Coupon } from '@/types';
-import Link from 'next/link';
+import type { Coupon } from '@/types';
+
+type Owner = 'Barbara' | 'Nico';
+const OWNERS: Owner[] = ['Barbara', 'Nico'];
 
 export default function AdminCuponesPage() {
+  // — Estados para el formulario de creación —
+  const [createTitle, setCreateTitle] = useState('');
+  const [createDescription, setCreateDescription] = useState('');
+  const [createOwner, setCreateOwner] = useState<Owner>('Barbara');
+  const [createLoading, setCreateLoading] = useState(false);
+
+  // — Estados para la lista —
+  const [listOwner, setListOwner] = useState<Owner>('Barbara');
   const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [listLoading, setListLoading] = useState(false);
+
+  // — Estado de error común —
   const [error, setError] = useState<string | null>(null);
 
-  const loadCoupons = async () => {
-    try {
-      const data = await getCoupons();
-      setCoupons(data);
-    } catch {
-      setError('Error cargando cupones');
-    }
-  };
-
+  // Carga la lista de cupones cada vez que cambia listOwner
   useEffect(() => {
-    loadCoupons();
-  }, []);
+    let mounted = true;
+    setListLoading(true);
+    setError(null);
 
+    getCoupons(listOwner)
+      .then(data => {
+        if (mounted) setCoupons(data);
+      })
+      .catch(() => {
+        if (mounted) setError('Error cargando cupones');
+      })
+      .finally(() => {
+        if (mounted) setListLoading(false);
+      });
+
+    return () => { mounted = false };
+  }, [listOwner]);
+
+  // Maneja la creación de un nuevo cupón
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim()) return;
-    setLoading(true);
+    if (!createTitle.trim() || !createDescription.trim()) return;
+    setCreateLoading(true);
+    setError(null);
+
     try {
-      await createCoupon(title, description);
-      setTitle('');
-      setDescription('');
-      await loadCoupons();
+      await createCoupon(createTitle, createDescription, createOwner);
+      setCreateTitle('');
+      setCreateDescription('');
+      // recarga la lista
+      setListOwner(createOwner);
     } catch {
       setError('Error creando cupón');
     } finally {
-      setLoading(false);
+      setCreateLoading(false);
     }
   };
 
-  const toggleRedeem = async (c: Coupon) => {
+  // Marca/desmarca como canjeado
+  const handleRedeem = async (c: Coupon) => {
     try {
       await redeemCoupon(c._id, !c.redeemed);
-      await loadCoupons();
+      // refetch
+      setListOwner(listOwner);
     } catch {
-      setError('Error actualizando estado');
+      setError('Error al actualizar estado');
     }
   };
 
+  // Elimina un cupón
   const handleDelete = async (id: string) => {
     try {
       await deleteCoupon(id);
-      await loadCoupons();
+      setListOwner(listOwner);
     } catch {
       setError('Error eliminando cupón');
     }
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white">
-      <div className="flex-1 overflow-y-auto max-w-3xl mx-auto p-6 space-y-6">
-        <Link href={'/'} >Volver al Home</Link>
-        <h1 className="text-3xl font-bold text-center">Admin de Cupones</h1>
+    <div className="flex flex-col min-h-screen bg-black text-white">
+      {/* Header */}
+      <header className="flex items-center justify-between p-4 bg-gray-900">
+        <Link href="/">
+          ← Home
+        </Link>
+        <h1 className="text-2xl font-bold">Admin de Cupones</h1>
+        <div className="w-6" />
+      </header>
 
+      <main className="flex-1 overflow-y-auto p-4 max-w-lg mx-auto space-y-8">
+        {/* Formulario de creación */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <p className="text-red-500">{error}</p>}
-          <input
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="Título"
-            className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2"
-          />
+          {error && <p className="text-red-500 text-center">{error}</p>}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <select
+              value={createOwner}
+              onChange={e => setCreateOwner(e.target.value as Owner)}
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2"
+            >
+              {OWNERS.map(o => (
+                <option key={o} value={o}>{o}</option>
+              ))}
+            </select>
+            <input
+              value={createTitle}
+              onChange={e => setCreateTitle(e.target.value)}
+              placeholder="Título"
+              className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2"
+            />
+          </div>
+
           <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
+            value={createDescription}
+            onChange={e => setCreateDescription(e.target.value)}
             placeholder="Descripción"
             className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 h-24 resize-none"
           />
+
           <button
             type="submit"
-            disabled={loading}
-            className={`w-full py-2 rounded-lg font-semibold transition-colors ${
-              loading
+            disabled={createLoading}
+            className={`
+              w-full py-2 rounded-lg font-semibold transition-colors
+              ${createLoading
                 ? 'bg-gray-600 cursor-not-allowed'
                 : 'bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700'
-            }`}
+              }
+            `}
           >
-            {loading ? 'Creando...' : 'Crear Cupón'}
+            {createLoading ? 'Creando...' : 'Crear Cupón'}
           </button>
         </form>
 
-        <section className="space-y-4">
-          <h2 className="text-2xl font-bold">Cupones creados</h2>
-          {coupons.length === 0 ? (
-            <p className="text-gray-400">No hay cupones.</p>
-          ) : (
-            <ul className="space-y-3">
-              {coupons.map(c => (
-                <li
-                  key={c._id}
-                  className="flex justify-between items-center bg-gradient-to-br from-gray-800 to-transparent border-2 border-dashed border-gray-600 rounded-lg p-4 shadow-lg"
-                >
-                  <div>
-                    <h3 className="text-lg font-semibold">{c.title}</h3>
-                    <p className="text-gray-400">{c.description}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => toggleRedeem(c)}
-                      className={`px-2 py-1 rounded-full text-sm font-medium transition-colors ${
-                        c.redeemed
-                          ? 'bg-green-600 text-white'
-                          : 'bg-white/10 text-white'
-                      }`}
-                    >
-                      {c.redeemed ? 'Descanjear' : 'Canjear'}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(c._id)}
-                      className="px-2 py-1 rounded-full bg-red-600 text-white text-sm"
-                    >
-                      X
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
+        {/* Filtrado de la lista */}
+        <div className="flex justify-center gap-4">
+          {OWNERS.map(o => (
+            <button
+              key={o}
+              onClick={() => setListOwner(o)}
+              className={`
+                px-4 py-2 rounded-full font-semibold transition-colors
+                ${listOwner === o
+                  ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }
+              `}
+            >
+              {o}
+            </button>
+          ))}
+        </div>
+
+        {/* Lista de cupones */}
+        {listLoading ? (
+          <div className="flex justify-center py-8">
+            <Spinner size="lg" />
+          </div>
+        ) : coupons.length === 0 ? (
+          <p className="text-gray-400 text-center">No hay cupones.</p>
+        ) : (
+          <ul className="space-y-4">
+            {coupons.map(c => (
+              <li
+                key={c._id}
+                className="flex flex-col sm:flex-row justify-between bg-gray-800 rounded-lg p-4 shadow"
+              >
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    [{c.owner}] {c.title}
+                  </h3>
+                  <p className="text-gray-400">{c.description}</p>
+                </div>
+                <div className="mt-4 sm:mt-0 flex gap-2">
+                  <button
+                    onClick={() => handleRedeem(c)}
+                    disabled={c.redeemed}
+                    className={`
+                      px-3 py-1 rounded-full text-sm font-medium transition-colors
+                      ${c.redeemed
+                        ? 'bg-green-600 text-white cursor-not-allowed'
+                        : 'bg-white/10 text-white hover:bg-white/20'
+                      }
+                    `}
+                  >
+                    {c.redeemed ? 'Descanjear' : 'Canjear'}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(c._id)}
+                    className="px-3 py-1 rounded-full bg-red-600 text-white text-sm"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
     </div>
   );
 }

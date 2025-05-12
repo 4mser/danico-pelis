@@ -1,79 +1,76 @@
 // components/CouponsPage.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Coupon } from '@/types';
+import { FiPlus } from 'react-icons/fi';
 import { Spinner } from '@/app/spinner';
 import { getCoupons, redeemCoupon } from '@/services/api';
+import type { Coupon } from '@/types';
 
-// Variants para animación stagger
+type Owner = 'Barbara' | 'Nico';
+const OWNERS: Owner[] = ['Barbara', 'Nico'];
+
+// Animaciones Framer Motion
 const listVariants = {
   hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    }
-  }
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
 };
-
 const itemVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
   show: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: {
-      type: 'spring',
-      stiffness: 120,
-      damping: 16,
-    }
+    transition: { type: 'spring', stiffness: 120, damping: 16 },
   },
-  exit: { opacity: 0, y: -20, transition: { duration: 0.2 } }
+  exit: { opacity: 0, y: -20, transition: { duration: 0.2 } },
 };
 
 export default function CouponsPage() {
-  const [coupons, setCoupons]     = useState<Coupon[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState<string | null>(null);
-  const [toggling, setToggling]   = useState<Record<string, boolean>>({});
+  const router = useRouter();
+  const [owner, setOwner] = useState<Owner>(OWNERS[0]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [toggling, setToggling] = useState<Record<string, boolean>>({});
 
-  // Carga inicial de cupones
+  // Carga cada vez que cambia el filtro "owner"
   useEffect(() => {
-    (async () => {
-      try {
-        setError(null);
-        const data = await getCoupons();
-        setCoupons(data);
-      } catch {
-        setError('No se pudieron cargar los cupones');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+    let mounted = true;
+    setLoading(true);
+    setError(null);
 
-  // Manejar canje
+    getCoupons(owner)
+      .then(data => {
+        if (mounted) setCoupons(data);
+      })
+      .catch(() => {
+        if (mounted) setError('No se pudieron cargar los cupones');
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => { mounted = false; };
+  }, [owner]);
+
+  // Handler: marcar cupón canjeado
   const handleToggle = async (c: Coupon) => {
-    if (c.redeemed) return;                   // no descanjeables de nuevo
+    if (c.redeemed) return;
     setToggling(prev => ({ ...prev, [c._id]: true }));
     try {
-      // pasamos el nuevo estado (true si antes era false)
-      const updated = await redeemCoupon(c._id, !c.redeemed);
+      const updated = await redeemCoupon(c._id, true);
       setCoupons(prev =>
-        prev.map(item =>
-          item._id === c._id
-            ? { ...item, redeemed: updated.redeemed }
-            : item
-        )
+        prev.map(x => x._id === updated._id ? updated : x)
       );
     } finally {
       setToggling(prev => ({ ...prev, [c._id]: false }));
     }
   };
-  
 
+  // Renderizados especiales
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -81,7 +78,6 @@ export default function CouponsPage() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="text-red-500 text-center py-8">
@@ -90,27 +86,48 @@ export default function CouponsPage() {
     );
   }
 
-  // Ordenar: primero no canjeados, luego canjeados
-  const sortedCoupons = [...coupons].sort((a, b) =>
-    a.redeemed === b.redeemed ? 0 : a.redeemed ? 1 : -1
-  );
-
   return (
-    <div className="min-h-full w-full bg-gray-900">
-      <div className="max-w-6xl mx-auto px-4 py-8 overflow-x-hidden relative">
-        <h2 className="text-3xl font-bold text-white text-center mb-8">
-          Cupones para Bárbara 🏷️ 🖤
+    <div className="min-h-full bg-gray-900 relative">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+
+        {/* Título general */}
+        <h1 className="text-3xl font-bold text-white text-center mb-6">
+          Cupones 🎟️
+        </h1>
+
+        {/* Filtro por owner */}
+        <div className="mb-8 flex justify-center gap-4">
+          {OWNERS.map(o => (
+            <button
+              key={o}
+              onClick={() => setOwner(o)}
+              className={`
+                px-5 py-2 rounded-full font-semibold transition-colors
+                ${owner === o
+                  ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }
+              `}
+            >
+              {o}
+            </button>
+          ))}
+        </div>
+
+        {/* Subtítulo dinámico */}
+        <h2 className="text-xl font-semibold text-white text-center mb-8">
+          Cupones de {owner}
         </h2>
 
+        {/* Grid de cupones */}
         <motion.div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           variants={listVariants}
           initial="hidden"
           animate="show"
-          exit="hidden"
         >
           <AnimatePresence>
-            {sortedCoupons.map(c => (
+            {coupons.map(c => (
               <motion.div
                 key={c._id}
                 className="relative"
@@ -119,65 +136,49 @@ export default function CouponsPage() {
                 animate="show"
                 exit="exit"
               >
-                {/* Notches */}
-                <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-gray-900 rounded-full" />
-                <div className="absolute -right-8 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-gray-900 rounded-full" />
+                {/* Decoración lateral */}
+                <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-12 h-12 bg-gray-900 rounded-full" />
+                <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-12 h-12 bg-gray-900 rounded-full" />
 
-                {/* Ticket */}
-                <div
-                  className={`
-                    bg-gradient-to-br from-gray-800 to-transparent
-                    border-2 border-dashed border-gray-600
-                    rounded-lg p-6 shadow-xl transition-colors
-                    hover:bg-gray-700
-                    ${c.redeemed ? 'opacity-50' : 'opacity-100'}
-                  `}
-                >
-                  <h3
-                    className={`
-                      text-2xl font-semibold text-white mb-2
-                      ${c.redeemed ? 'line-through' : ''}
-                    `}
-                  >
+                {/* Tarjeta del cupón */}
+                <div className={`
+                  bg-gradient-to-br from-gray-800 to-transparent
+                  border-2 border-dashed border-gray-600
+                  rounded-lg p-6 shadow-xl transition-colors
+                  hover:bg-gray-700
+                  ${c.redeemed ? 'opacity-50' : 'opacity-100'}
+                `}>
+                  <h3 className={`
+                    text-2xl font-semibold text-white mb-2
+                    ${c.redeemed ? 'line-through' : ''}
+                  `}>
                     {c.title}
                   </h3>
-                  <p
-                    className={`
-                      text-gray-300 leading-relaxed
-                      ${c.redeemed ? 'line-through' : ''}
-                    `}
-                  >
+                  <p className={`
+                    text-gray-300 leading-relaxed
+                    ${c.redeemed ? 'line-through' : ''}
+                  `}>
                     {c.description}
                   </p>
 
-                  {/* Switch de canje */}
-                  <div className="mt-4 flex items-center justify-end">
-                    {toggling[c._id] ? (
-                      <Spinner size="sm" />
-                    ) : (
-                      <label className="inline-flex items-center cursor-pointer gap-2">
-                        <span className="text-sm font-medium text-gray-200">
-                          {c.redeemed ? 'Canjeado' : 'Canjear'}
-                        </span>
-                        <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          checked={c.redeemed}
+                  <div className="mt-4 flex justify-end">
+                    {toggling[c._id]
+                      ? <Spinner size="sm" />
+                      : (
+                        <button
+                          onClick={() => handleToggle(c)}
                           disabled={c.redeemed}
-                          onChange={() => handleToggle(c)}
-                        />
-                        <div className={`
-                          w-11 h-6 rounded-full relative
-                          bg-gray-600 peer-focus:ring-2 peer-focus:ring-purple-500
-                          before:content-[''] before:absolute before:top-0.5 before:left-0.5
-                          before:bg-white before:border before:border-gray-300 before:rounded-full
-                          before:h-5 before:w-5 before:transition-all
-                          peer-checked:bg-green-600
-                          peer-checked:before:translate-x-full
-                          ${c.redeemed ? 'cursor-not-allowed' : 'cursor-pointer'}
-                        `} />
-                      </label>
-                    )}
+                          className={`
+                            px-3 py-1 rounded-full text-sm font-medium transition-colors
+                            ${c.redeemed
+                              ? 'bg-green-600 text-white cursor-not-allowed'
+                              : 'bg-white/10 text-white hover:bg-white/20'}
+                          `}
+                        >
+                          {c.redeemed ? 'Canjeado' : 'Canjear'}
+                        </button>
+                      )
+                    }
                   </div>
                 </div>
               </motion.div>
@@ -185,6 +186,21 @@ export default function CouponsPage() {
           </AnimatePresence>
         </motion.div>
       </div>
+
+      {/* Botón flotante para crear nuevos cupones */}
+      <button
+        onClick={() => router.push('/AdminCupones')}
+        className="
+          fixed bottom-20 right-4 w-14 h-14 rounded-full p-[2px]
+          bg-gradient-to-r from-pink-500 to-purple-600
+          hover:from-pink-600 hover:to-purple-700
+          animate-pulse z-10
+        "
+      >
+        <span className="bg-black/70 w-full h-full flex items-center justify-center text-3xl rounded-full">
+          <FiPlus className="text-white" />
+        </span>
+      </button>
     </div>
   );
 }
