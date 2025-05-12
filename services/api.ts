@@ -187,9 +187,9 @@ export const updateProduct = async (
 
 export const toggleProductBought = async (
   id: string,
-  bought: boolean,
+  currentBought: boolean,
 ): Promise<Product> => {
-  return updateProduct(id, { bought: !bought });
+  return updateProduct(id, { bought: !currentBought });
 };
 
 export const deleteProduct = async (id: string): Promise<void> => {

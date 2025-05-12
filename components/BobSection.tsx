@@ -66,7 +66,7 @@ export default function RabanitoSection() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className="max-w-md mt-10 mx-auto p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg space-y-6"
+      className=" m-6 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg space-y-6"
     >
       <h2 className="text-3xl font-extrabold text-center text-gray-900 dark:text-white">
         🐇 Rabanito
