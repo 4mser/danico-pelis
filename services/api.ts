@@ -9,8 +9,8 @@ import type {
   Pet,
 } from '@/types';
 
-// const API_URL = 'https://pelis-danico-production.up.railway.app';
-const API_URL = 'http://localhost:3000';
+const API_URL = 'https://pelis-danico-production.up.railway.app';
+// const API_URL = 'http://localhost:3000';
 
 /** ——— Mascota ——— */
 
