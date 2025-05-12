@@ -85,7 +85,7 @@ export default function CouponsPage() {
     <div className="bg-gray-900 relative">
       <div className="px-4 pt-7 sm:max-w-3xl mx-auto space-y-6 pb-20">
 
-        <h1 className="text-3xl font-bold text-white text-center">Cupones 🎟️</h1>
+        <h1 className="text-3xl font-bold text-white text-center">Cupones de {owner} 🎟️</h1>
 
         <div className="flex justify-center gap-2">
           {OWNERS.map(o => (
@@ -103,9 +103,7 @@ export default function CouponsPage() {
           ))}
         </div>
 
-        <h2 className="text-lg sm:text-xl font-medium text-gray-200 text-center">
-          Cupones de {owner}
-        </h2>
+       
 
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -125,13 +123,13 @@ export default function CouponsPage() {
                 variants={itemVariants}
                 layout
               >
-                <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-gray-900 rounded-full" />
-                <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-gray-900 rounded-full" />
+                <div className="absolute -left-7 top-1/2 -translate-y-1/2 w-11 h-11 bg-gray-900 rounded-full" />
+                <div className="absolute -right-7 top-1/2 -translate-y-1/2 w-11 h-11 bg-gray-900 rounded-full" />
 
                 <div className={`
                   bg-gradient-to-br from-gray-800 to-transparent
                   border-2 border-dashed border-gray-600
-                  rounded-lg p-6 shadow-lg hover:bg-gray-700
+                  rounded-lg p-6 shadow-lg 
                   ${c.redeemed ? 'opacity-50' : 'opacity-100'}
                 `}>
                   <h3 className={`text-2xl font-semibold text-white mb-2 ${c.redeemed ? 'line-through' : ''}`}>
