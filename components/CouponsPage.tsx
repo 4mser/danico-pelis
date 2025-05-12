@@ -12,65 +12,49 @@ import type { Coupon } from '@/types';
 type Owner = 'Barbara' | 'Nico';
 const OWNERS: Owner[] = ['Barbara', 'Nico'];
 
-// Animaciones Framer Motion
+// Framer Motion variants
 const listVariants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } },
 };
 const itemVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
-  show: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { type: 'spring', stiffness: 120, damping: 16 },
-  },
-  exit: { opacity: 0, y: -20, transition: { duration: 0.2 } },
+  show:  { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 120, damping: 16 } },
+  exit:  { opacity: 0, y: -20, transition: { duration: 0.2 } },
 };
 
 export default function CouponsPage() {
   const router = useRouter();
   const [owner, setOwner] = useState<Owner>(OWNERS[0]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<Record<string, boolean>>({});
 
-  // Carga cada vez que cambia el filtro "owner"
+  // fetch when owner changes
   useEffect(() => {
     let mounted = true;
     setLoading(true);
     setError(null);
-
     getCoupons(owner)
-      .then(data => {
-        if (mounted) setCoupons(data);
-      })
-      .catch(() => {
-        if (mounted) setError('No se pudieron cargar los cupones');
-      })
-      .finally(() => {
-        if (mounted) setLoading(false);
-      });
-
-    return () => { mounted = false; };
+      .then(data => mounted && setCoupons(data))
+      .catch(() => mounted && setError('No se pudieron cargar los cupones'))
+      .finally(() => mounted && setLoading(false));
+    return () => { mounted = false };
   }, [owner]);
 
-  // Handler: marcar cupón canjeado
+  // toggle redeem via switch
   const handleToggle = async (c: Coupon) => {
     if (c.redeemed) return;
     setToggling(prev => ({ ...prev, [c._id]: true }));
     try {
       const updated = await redeemCoupon(c._id, true);
-      setCoupons(prev =>
-        prev.map(x => x._id === updated._id ? updated : x)
-      );
+      setCoupons(prev => prev.map(x => x._id === updated._id ? updated : x));
     } finally {
       setToggling(prev => ({ ...prev, [c._id]: false }));
     }
   };
 
-  // Renderizados especiales
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -87,22 +71,22 @@ export default function CouponsPage() {
   }
 
   return (
-    <div className="min-h-full bg-gray-900 relative">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className=" bg-gray-900 relative">
+      <div className=" px-4 py-8 space-y-6">
 
-        {/* Título general */}
-        <h1 className="text-3xl font-bold text-white text-center mb-6">
+        {/* Header */}
+        <h1 className="text-2xl sm:text-3xl font-bold text-white text-center">
           Cupones 🎟️
         </h1>
 
-        {/* Filtro por owner */}
-        <div className="mb-8 flex justify-center gap-4">
+        {/* Owner filter */}
+        <div className="flex justify-center gap-3">
           {OWNERS.map(o => (
             <button
               key={o}
               onClick={() => setOwner(o)}
               className={`
-                px-5 py-2 rounded-full font-semibold transition-colors
+                px-4 py-1 rounded-full font-semibold transition-colors
                 ${owner === o
                   ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -114,14 +98,14 @@ export default function CouponsPage() {
           ))}
         </div>
 
-        {/* Subtítulo dinámico */}
-        <h2 className="text-xl font-semibold text-white text-center mb-8">
+        {/* Subtitle */}
+        <h2 className="text-lg sm:text-xl font-medium text-gray-200 text-center">
           Cupones de {owner}
         </h2>
 
-        {/* Grid de cupones */}
+        {/* Coupons grid */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           variants={listVariants}
           initial="hidden"
           animate="show"
@@ -136,49 +120,48 @@ export default function CouponsPage() {
                 animate="show"
                 exit="exit"
               >
-                {/* Decoración lateral */}
-                <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-12 h-12 bg-gray-900 rounded-full" />
-                <div className="absolute -right-8 top-1/2 -translate-y-1/2 w-12 h-12 bg-gray-900 rounded-full" />
+                {/* Side notches */}
+                <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-gray-900 rounded-full" />
+                <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-gray-900 rounded-full" />
 
-                {/* Tarjeta del cupón */}
+                {/* Card */}
                 <div className={`
                   bg-gradient-to-br from-gray-800 to-transparent
                   border-2 border-dashed border-gray-600
-                  rounded-lg p-6 shadow-xl transition-colors
+                  rounded-lg p-4 sm:p-6 shadow-lg transition-colors
                   hover:bg-gray-700
                   ${c.redeemed ? 'opacity-50' : 'opacity-100'}
                 `}>
-                  <h3 className={`
-                    text-2xl font-semibold text-white mb-2
-                    ${c.redeemed ? 'line-through' : ''}
-                  `}>
+                  <h3 className={`text-lg sm:text-xl font-semibold text-white mb-2 ${c.redeemed ? 'line-through' : ''}`}>
                     {c.title}
                   </h3>
-                  <p className={`
-                    text-gray-300 leading-relaxed
-                    ${c.redeemed ? 'line-through' : ''}
-                  `}>
+                  <p className={`text-gray-300 text-sm sm:text-base mb-4 ${c.redeemed ? 'line-through' : ''}`}>
                     {c.description}
                   </p>
-
-                  <div className="mt-4 flex justify-end">
-                    {toggling[c._id]
-                      ? <Spinner size="sm" />
-                      : (
-                        <button
-                          onClick={() => handleToggle(c)}
-                          disabled={c.redeemed}
-                          className={`
-                            px-3 py-1 rounded-full text-sm font-medium transition-colors
-                            ${c.redeemed
-                              ? 'bg-green-600 text-white cursor-not-allowed'
-                              : 'bg-white/10 text-white hover:bg-white/20'}
-                          `}
-                        >
+                  <div className="flex justify-end items-center gap-3">
+                    {toggling[c._id] ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      <label className="inline-flex items-center cursor-pointer gap-2">
+                        <span className="text-gray-200 text-sm">
                           {c.redeemed ? 'Canjeado' : 'Canjear'}
-                        </button>
-                      )
-                    }
+                        </span>
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={c.redeemed}
+                          disabled={c.redeemed}
+                          onChange={() => handleToggle(c)}
+                        />
+                        <div className={`
+                          w-10 h-5 rounded-full bg-gray-600 peer-focus:ring-2 peer-focus:ring-purple-500
+                          relative before:content-[''] before:absolute before:top-0.5 before:left-0.5
+                          before:bg-white before:border before:border-gray-300 before:rounded-full
+                          before:h-4 before:w-4 before:transition-all
+                          peer-checked:bg-green-600 peer-checked:before:translate-x-full
+                        `} />
+                      </label>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -187,7 +170,7 @@ export default function CouponsPage() {
         </motion.div>
       </div>
 
-      {/* Botón flotante para crear nuevos cupones */}
+      {/* Floating "add coupon" button */}
       <button
         onClick={() => router.push('/AdminCupones')}
         className="
@@ -197,7 +180,7 @@ export default function CouponsPage() {
           animate-pulse z-10
         "
       >
-        <span className="bg-black/70 w-full h-full flex items-center justify-center text-3xl rounded-full">
+        <span className="bg-black/70 w-full h-full flex items-center justify-center text-2xl rounded-full">
           <FiPlus className="text-white" />
         </span>
       </button>
