@@ -97,7 +97,7 @@ export default function AdminCuponesPage() {
       </header>
 
       {/* Contenido */}
-      <main className="flex-1 overflow-y-auto p-4 max-w-md sm:max-w-lg mx-auto space-y-6">
+      <main className="flex-1 overflow-y-auto p-4 space-y-6">
 
         {/* Error genérico */}
         {error && (
