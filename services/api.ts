@@ -100,13 +100,15 @@ export const redeemCoupon = async (
 ): Promise<Coupon> => {
   const res = await axios.patch<Coupon>(
     `${API_URL}/coupons/${id}/redeem`,
-    { redeemed: !redeemed },
+    { redeemed },
   );
-  if (!redeemed) {
+  // Sólo disparamos la interacción si estamos canjeando (redeemed === true)
+  if (redeemed) {
     await interactWithPet('redeemCoupon');
   }
   return res.data;
 };
+
 
 export const deleteCoupon = async (id: string): Promise<void> => {
   await axios.delete(`${API_URL}/coupons/${id}`);

@@ -56,21 +56,23 @@ export default function CouponsPage() {
 
   // Manejar canje
   const handleToggle = async (c: Coupon) => {
-    if (c.redeemed) return;
+    if (c.redeemed) return;                   // no descanjeables de nuevo
     setToggling(prev => ({ ...prev, [c._id]: true }));
     try {
-      const updated = await redeemCoupon(c._id, true);
+      // pasamos el nuevo estado (true si antes era false)
+      const updated = await redeemCoupon(c._id, !c.redeemed);
       setCoupons(prev =>
         prev.map(item =>
-          item._id === c._id ? { ...item, redeemed: updated.redeemed } : item
+          item._id === c._id
+            ? { ...item, redeemed: updated.redeemed }
+            : item
         )
       );
-    } catch {
-      // opcional: mostrar mensaje de error
     } finally {
       setToggling(prev => ({ ...prev, [c._id]: false }));
     }
   };
+  
 
   if (loading) {
     return (
