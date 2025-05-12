@@ -4,6 +4,7 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import Link from 'next/link';
 import { Spinner } from '@/app/spinner';
+import { FiTrash } from 'react-icons/fi';
 import {
   getCoupons,
   createCoupon,
@@ -24,13 +25,13 @@ export default function AdminCuponesPage() {
 
   // — Listar cupones —
   const [listOwner, setListOwner] = useState<Owner>('Barbara');
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [coupons, setCoupons] = useState<(Coupon & { _tempLoading?: boolean })[]>([]);
   const [listLoading, setListLoading] = useState(false);
 
   // — Error genérico —
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar cupones cada vez que cambia listOwner
+  // Cargar cupones al montar y cuando cambie listOwner
   useEffect(() => {
     let mounted = true;
     setListLoading(true);
@@ -44,7 +45,7 @@ export default function AdminCuponesPage() {
     return () => { mounted = false; };
   }, [listOwner]);
 
-  // Maneja envío de formulario
+  // Manejador de creación
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!createTitle.trim() || !createDescription.trim()) return;
@@ -52,11 +53,12 @@ export default function AdminCuponesPage() {
     setError(null);
 
     try {
-      await createCoupon(createTitle, createDescription, createOwner);
+      const newCoupon = await createCoupon(createTitle, createDescription, createOwner);
+      if (createOwner === listOwner) {
+        setCoupons(prev => [newCoupon, ...prev]);
+      }
       setCreateTitle('');
       setCreateDescription('');
-      // Cambia el filtro para recargar la lista
-      setListOwner(createOwner);
     } catch {
       setError('Error creando cupón');
     } finally {
@@ -64,35 +66,50 @@ export default function AdminCuponesPage() {
     }
   };
 
-  // Canjear/descancelar cupón
-  const handleRedeem = async (c: Coupon) => {
+  // Canjear / descanjear inmediatamente
+  const handleToggle = async (c: Coupon & { _tempLoading?: boolean }) => {
+    setError(null);
+    setCoupons(prev =>
+      prev.map(x =>
+        x._id === c._id ? { ...x, _tempLoading: true } : x
+      )
+    );
     try {
-      await redeemCoupon(c._id, !c.redeemed);
-      // Refresca la lista
-      setListOwner(listOwner);
+      const updated = await redeemCoupon(c._id, !c.redeemed);
+      setCoupons(prev =>
+        prev.map(x =>
+          x._id === updated._id ? { ...updated, _tempLoading: false } : x
+        )
+      );
     } catch {
       setError('Error actualizando estado');
+      setCoupons(prev =>
+        prev.map(x =>
+          x._id === c._id ? { ...x, _tempLoading: false } : x
+        )
+      );
     }
   };
 
-  // Eliminar cupón
+  // Eliminar con confirmación y actualización instantánea
   const handleDelete = async (id: string) => {
+    setError(null);
+    if (!confirm('¿Seguro que quieres eliminar este cupón?')) return;
     try {
       await deleteCoupon(id);
-      setListOwner(listOwner);
+      setCoupons(prev => prev.filter(x => x._id !== id));
     } catch {
       setError('Error eliminando cupón');
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white">
+    <div className="flex flex-col text-white">
       {/* Header */}
-      <header className="flex items-center justify-between p-4 bg-gray-900">
+      <header className="flex items-center justify-between p-4">
         <Link href="/">
-          ← Home
+          ← Volver
         </Link>
-        <h1 className="text-xl sm:text-2xl font-bold">Admin de Cupones</h1>
         <div className="w-6" />
       </header>
 
@@ -106,7 +123,7 @@ export default function AdminCuponesPage() {
 
         {/* Formulario de creación */}
         <form onSubmit={handleSubmit} className="space-y-4 bg-gray-800 p-4 rounded-md shadow">
-          <h2 className="text-lg font-semibold">Crear cupón</h2>
+          <h2 className="text-lg font-semibold">Crear cupón para:</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <select
@@ -173,38 +190,49 @@ export default function AdminCuponesPage() {
           <p className="text-gray-400 text-center">No hay cupones de {listOwner}.</p>
         ) : (
           <ul className="space-y-4">
-            {coupons.map(c => (
-              <li
-                key={c._id}
-                className="flex flex-col sm:flex-row justify-between bg-gray-800 rounded-md p-4 shadow"
-              >
-                <div>
-                  <h3 className="text-base sm:text-lg font-semibold">
-                    [{c.owner}] {c.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm">{c.description}</p>
-                </div>
-                <div className="mt-3 sm:mt-0 flex gap-2">
-                  <button
-                    onClick={() => handleRedeem(c)}
-                    disabled={c.redeemed}
-                    className={`px-2 py-1 rounded-full text-xs sm:text-sm font-medium transition-colors ${
-                      c.redeemed
-                        ? 'bg-green-600 text-white cursor-not-allowed'
-                        : 'bg-white/10 text-white hover:bg-white/20'
-                    }`}
-                  >
-                    {c.redeemed ? 'Descanjear' : 'Canjear'}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(c._id)}
-                    className="px-2 py-1 rounded-full bg-red-600 text-white text-xs sm:text-sm"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </li>
-            ))}
+            {coupons.map(c => {
+              const isLoading = c._tempLoading;
+              const color = c.owner === 'Barbara' ? 'bg-pink-800' : 'bg-blue-900';
+              const dotColor = c.owner === 'Barbara' ? 'bg-pink-300' : 'bg-blue-300';
+              return (
+                <li
+                  key={c._id}
+                  className="flex flex-col justify-between bg-gray-800 rounded-md p-4 shadow"
+                >
+                  {/* Contenido */}
+                  <div>
+                    <h3 className="text-base sm:text-lg font-semibold">{c.title}</h3>
+                    <p className="text-gray-400 text-sm sm:text-base">{c.description}</p>
+                  </div>
+
+                  {/* Footer: tag a la izquierda, acciones a la derecha */}
+                  <div className="mt-4 flex justify-between items-center">
+                    {/* Tag de owner */}
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${color}`}>
+                      <span className={`w-2 h-2 rounded-full mr-1 ${dotColor}`} />
+                      {c.owner}
+                    </span>
+
+                    {/* Switch + ícono eliminar */}
+                    <div className="inline-flex items-center space-x-3">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={c.redeemed}
+                          onChange={() => handleToggle(c as Coupon & { _tempLoading?: boolean })}
+                          disabled={isLoading}
+                        />
+                        <div className={`w-11 h-6 bg-gray-600 peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-purple-500 rounded-full peer-checked:bg-green-600 peer-disabled:opacity-50 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:bg-white before:border before:border-gray-300 before:rounded-full before:h-5 before:w-5 before:transition-all peer-checked:before:translate-x-full`} />
+                      </label>
+                      <button onClick={() => handleDelete(c._id)} className="p-1">
+                        <FiTrash className="text-red-400 hover:text-red-600" />
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </main>
