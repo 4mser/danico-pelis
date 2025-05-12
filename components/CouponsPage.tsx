@@ -159,7 +159,7 @@ export default function CouponsPage() {
                   </p>
 
                   {c.expirationDate && (
-                    <p className="text-sm text-yellow-300 mb-2">
+                    <p className="text-sm text-red-400 mb-2">
                       ⏳ Expira en: {timers[c._id] || 'calculando...'}
                     </p>
                   )}
