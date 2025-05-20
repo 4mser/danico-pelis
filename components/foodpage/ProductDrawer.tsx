@@ -58,7 +58,7 @@ export const ProductDrawer: FC<ProductDrawerProps> = ({
               <img
                 src={product.image}
                 alt={product.name}
-                className="w-full max-h-[60dvh] object-cover rounded-lg"
+                className="w-full max-h-[50dvh] object-cover rounded-lg"
               />
 
               {product.likeBoth && (
