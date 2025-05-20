@@ -41,7 +41,8 @@ export const ProductCard: FC<ProductCardProps> = ({
   return (
     <motion.div
       onClick={onClick}
-      className={`
+      className={
+        `
         relative bg-gray-800 rounded-xl overflow-hidden shadow-lg cursor-pointer
         ${p.bought ? 'bg-transparent shadow-none border border-dashed border-white/20' : ''}
       `}
@@ -50,7 +51,8 @@ export const ProductCard: FC<ProductCardProps> = ({
       <img
         src={p.image}
         alt={p.name}
-        className={`
+        className={
+          `
           h-[147px] w-full object-cover transition-all duration-200
           ${p.bought ? 'filter grayscale' : ''}
         `}
@@ -133,6 +135,11 @@ export const ProductCard: FC<ProductCardProps> = ({
         <h3 className={`font-semibold text-lg ${p.bought ? 'line-through text-gray-500' : ''}`}>
           {p.name}
         </h3>
+        {p.storeName && (
+          <p className="text-sm text-gray-400">
+            {p.storeName}
+          </p>
+        )}
       </div>
     </motion.div>
   );
