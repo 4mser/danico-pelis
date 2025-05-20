@@ -51,12 +51,30 @@ export const ProductDrawer: FC<ProductDrawerProps> = ({
             style={{ touchAction: 'none' }}
           >
             <div className="w-10 h-1 bg-gray-600 rounded mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-4">{product.name}</h2>
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full max-h-[60dvh] object-cover rounded-lg mb-4"
-            />
+            <h2 className="text-2xl font-bold mb-4 text-center">{product.name}</h2>
+
+            {/* Imagen con overlay de "both" */}
+            <div className="relative mb-4">
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full max-h-[60dvh] object-cover rounded-lg"
+              />
+
+              {product.likeBoth && (
+                <div className="absolute top-2 left-2 flex items-center space-x-1 bg-gray-800/60 backdrop-blur-md px-2 py-1 rounded-full">
+                  <Icon
+                    icon="fluent-emoji:revolving-hearts"
+                    width="20" height="20"
+                    className="text-white"
+                  />
+                  <span className="text-white text-xs">
+                    A ambos les gusta este producto
+                  </span>
+                </div>
+              )}
+            </div>
+
             {product.storeName && (
               <a
                 href={product.storeLink}
@@ -67,12 +85,15 @@ export const ProductDrawer: FC<ProductDrawerProps> = ({
                 {product.storeName}
               </a>
             )}
-            <p><strong>Estado:</strong> {product.bought ? 'Comprado' : 'Pendiente'}</p>
 
-            <div className="flex mt-4 items-center space-x-10">
+            <p>
+              <strong>Estado:</strong> {product.bought ? 'Comprado' : 'Pendiente'}
+            </p>
+
+            <div className="flex mt-4 items-center space-x-7">
               <button
                 onClick={() => onLike(product, 'Barbara')}
-                className="flex flex-col items-center p-2 rounded-md  hover:bg-gray-800"
+                className="flex flex-col items-center p-2 rounded-md hover:bg-gray-800"
               >
                 <Icon
                   icon="fluent-emoji:pink-heart"
@@ -84,7 +105,7 @@ export const ProductDrawer: FC<ProductDrawerProps> = ({
 
               <button
                 onClick={() => onLike(product, 'Nico')}
-                className="flex flex-col items-center p-2 rounded-md  hover:bg-gray-800"
+                className="flex flex-col items-center p-2 rounded-md hover:bg-gray-800"
               >
                 <Icon
                   icon="fluent-emoji:light-blue-heart"
