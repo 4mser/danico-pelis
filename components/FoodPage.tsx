@@ -268,7 +268,7 @@ export default function FoodPage() {
           >
             <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedProduct(null)} />
             <motion.div
-              className="relative w-full max-h-[80dvh] bg-gradient-to-br from-gray-800  to-gray-900 rounded-t-3xl p-6 overflow-y-auto"
+              className="relative w-full max-h-[90dvh] bg-gradient-to-br from-gray-800  to-gray-900 rounded-t-3xl p-6 overflow-y-auto"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -278,18 +278,19 @@ export default function FoodPage() {
               transition={{ type: 'tween' }}
             >
               <div className="w-10 h-1 bg-gray-600 rounded mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">{selectedProduct.name}</h2>
+              <h2 className="text-2xl font-bold mb-4">{selectedProduct.name}</h2>
               <img
                 src={selectedProduct.image}
                 alt={selectedProduct.name}
-                className="w-full h-full object-cover rounded mb-4"
+                className="w-full h-full max-h-[60dvh] object-cover rounded-lg  mb-4"
               />
               {selectedProduct.storeName && (
+                
                 <a
                   href={selectedProduct.storeLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-400 hover:underline mb-2 block"
+                  className="text-md text-blue-400 hover:underline mb-2 block"
                 >
                   {selectedProduct.storeName}
                 </a>
