@@ -32,7 +32,7 @@ export default function FoodPage() {
   const [showFilters, setShowFilters]   = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product|null>(null);
 
-  // Carga inicial
+  // Carga inicial de productos
   useEffect(() => {
     getProducts().then(data => {
       setItems(data);
@@ -40,10 +40,10 @@ export default function FoodPage() {
     });
   }, []);
 
-  const refreshItem = (u: Product) =>
-    setItems(old => old.map(x => x._id === u._id ? u : x));
+  const refreshItem = (updated: Product) =>
+    setItems(old => old.map(x => x._id === updated._id ? updated : x));
 
-  // Bought
+  // Toggle comprado
   const handleBought = async (p: Product) => {
     setTogBought(t => ({ ...t, [p._id]: true }));
     const upd = await toggleProductBought(p._id, p.bought);
@@ -51,9 +51,8 @@ export default function FoodPage() {
     setTogBought(t => ({ ...t, [p._id]: false }));
   };
 
-  // Like CON optimistic update SIN deshabilitar botones
+  // Like con optimistic update
   const handleLike = async (p: Product, who: 'Barbara' | 'Nico') => {
-    // Optimistic UI:
     setItems(old => old.map(x => {
       if (x._id !== p._id) return x;
       return {
@@ -64,12 +63,13 @@ export default function FoodPage() {
                    && (who === 'Nico'    ? !x.likeNico     : x.likeNico),
       };
     }));
-    // Backend en segundo plano
+
     const form = new FormData();
     form.append(
       who === 'Barbara' ? 'likeBarbara' : 'likeNico',
       (!(who === 'Barbara' ? p.likeBarbara : p.likeNico)).toString()
     );
+
     try {
       const upd = await updateProduct(p._id, form);
       refreshItem(upd);
@@ -78,14 +78,16 @@ export default function FoodPage() {
     }
   };
 
-  // Debounce búsqueda
+  // Debounce para búsqueda
   const handleRawSearch = (v: string) => {
     setRawSearch(v);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setSearch(v.trim()), 300);
+    debounceRef.current = setTimeout(() => {
+      setSearch(v.trim());
+    }, 300);
   };
 
-  // Filtrado
+  // Filtrado de productos
   const visible = useMemo(() => items
     .filter(p => {
       if (statusFilter === 'pending' && p.bought) return false;
@@ -99,6 +101,11 @@ export default function FoodPage() {
       return true;
     })
   , [items, statusFilter, heartFilter, search]);
+
+  // Asegura que el drawer use la versión actualizada del producto
+  const currentProduct = selectedProduct
+    ? items.find(x => x._id === selectedProduct._id) ?? selectedProduct
+    : null;
 
   return (
     <div className="bg-gray-900 text-white flex flex-col min-h-screen">
@@ -162,8 +169,8 @@ export default function FoodPage() {
       />
 
       <ProductDrawer
-        product={selectedProduct}
-        isOpen={!!selectedProduct}
+        product={currentProduct}
+        isOpen={!!currentProduct}
         onClose={() => setSelectedProduct(null)}
         onLike={handleLike}
       />

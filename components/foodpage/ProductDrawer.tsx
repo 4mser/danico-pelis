@@ -24,25 +24,31 @@ export const ProductDrawer: FC<ProductDrawerProps> = ({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && product && (
-        <motion.div
-          className="fixed inset-0 z-50 flex justify-center items-end"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+    <>
+      {/* Overlay: estático mientras isOpen */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sheet: solo este se anima con AnimatePresence */}
+      <AnimatePresence initial={false}>
+        {isOpen && product && (
           <motion.div
-            className="relative w-full max-h-[90dvh] bg-gradient-to-br from-gray-800 to-gray-900 rounded-t-3xl p-6 overflow-y-auto"
+            key="drawer-sheet"
+            className="fixed inset-x-0 bottom-0 z-50 w-full max-h-[90dvh] bg-gradient-to-br from-gray-800 to-gray-900 rounded-t-3xl p-6 overflow-y-auto"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
+            transition={{ type: 'tween', duration: 0.3 }}
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={0.2}
+            dragMomentum={false}
             onDragEnd={handleDragEnd}
-            transition={{ type: 'tween' }}
+            style={{ touchAction: 'none' }}
           >
             <div className="w-10 h-1 bg-gray-600 rounded mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-4">{product.name}</h2>
@@ -62,8 +68,12 @@ export const ProductDrawer: FC<ProductDrawerProps> = ({
               </a>
             )}
             <p><strong>Estado:</strong> {product.bought ? 'Comprado' : 'Pendiente'}</p>
+
             <div className="flex mt-4 items-center space-x-10">
-              <button onClick={() => onLike(product, 'Barbara')} className="flex flex-col items-center">
+              <button
+                onClick={() => onLike(product, 'Barbara')}
+                className="flex flex-col items-center p-2 rounded-md  hover:bg-gray-800"
+              >
                 <Icon
                   icon="fluent-emoji:pink-heart"
                   width="32" height="32"
@@ -71,7 +81,11 @@ export const ProductDrawer: FC<ProductDrawerProps> = ({
                 />
                 <span className="text-xs mt-1">Bárbara</span>
               </button>
-              <button onClick={() => onLike(product, 'Nico')} className="flex flex-col items-center">
+
+              <button
+                onClick={() => onLike(product, 'Nico')}
+                className="flex flex-col items-center p-2 rounded-md  hover:bg-gray-800"
+              >
                 <Icon
                   icon="fluent-emoji:light-blue-heart"
                   width="32" height="32"
@@ -81,8 +95,8 @@ export const ProductDrawer: FC<ProductDrawerProps> = ({
               </button>
             </div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </>
   );
 };

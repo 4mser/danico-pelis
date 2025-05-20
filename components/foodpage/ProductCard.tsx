@@ -83,7 +83,7 @@ export const ProductCard: FC<ProductCardProps> = ({
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-10 right-0 flex bg-gray-700 rounded-full px-2 py-1 space-x-2 shadow-lg"
+                    className="absolute top-11 right-0 flex bg-gray-700 rounded-full px-2 py-[3px] space-x-2 shadow-lg"
                     onClick={e => e.stopPropagation()}
                   >
                     <button
