@@ -85,7 +85,7 @@ export default function Page() {
           onClick={() => setSection('mapa')}
           className={`
             flex-1 flex flex-col items-center justify-center
-            ${section === 'bob'
+            ${section === 'mapa'
               ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
               : 'text-gray-400 hover:text-gray-200'}
           `}
