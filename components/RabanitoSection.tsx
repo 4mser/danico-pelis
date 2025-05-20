@@ -18,6 +18,7 @@ const interactionLabels: Record<InteractionType, string> = {
   likeBoth:     'a ambos les gustó algo',
   addCoupon:    'añadieron un cupón',
   redeemCoupon: 'canjearon un cupón',
+  deleteProduct: 'Eliminaron un producto'
 };
 
 export default function RabanitoSection() {
