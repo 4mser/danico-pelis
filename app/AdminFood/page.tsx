@@ -1,7 +1,7 @@
 // app/AdminFood/page.tsx
 'use client';
 
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent, useRef } from 'react';
 import Link from 'next/link';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import {
@@ -14,83 +14,89 @@ import { Product } from '@/types';
 import { Spinner } from '@/app/spinner';
 
 export default function AdminFoodPage() {
-  const [items, setItems] = useState<Product[]>([])
-  const [name, setName] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [storeName, setStoreName] = useState('')
-  const [storeLink, setStoreLink] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({})
+  const [items, setItems] = useState<Product[]>([]);
+  const [name, setName] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [storeName, setStoreName] = useState('');
+  const [storeLink, setStoreLink] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
+
+  // Ref al scrollable container
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const load = async () => {
-    const data = await getProducts()
-    setItems(data)
-  }
+    const data = await getProducts();
+    setItems(data);
+  };
 
   useEffect(() => {
-    load()
-  }, [])
+    load();
+  }, []);
 
   const resetForm = () => {
-    setName('')
-    setImageUrl('')
-    setImageFile(null)
-    setStoreName('')
-    setStoreLink('')
-    setEditingId(null)
-  }
+    setName('');
+    setImageUrl('');
+    setImageFile(null);
+    setStoreName('');
+    setStoreLink('');
+    setEditingId(null);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    if (!name.trim()) return
-    setLoading(true)
+    e.preventDefault();
+    if (!name.trim()) return;
+    setLoading(true);
     try {
-      const formData = new FormData()
-      formData.append('name', name)
-      if (imageFile) {
-        formData.append('imageFile', imageFile)
-      } else if (imageUrl.trim()) {
-        formData.append('imageUrl', imageUrl.trim())
-      }
-      if (storeName.trim()) formData.append('storeName', storeName.trim())
-      if (storeLink.trim()) formData.append('storeLink', storeLink.trim())
+      const formData = new FormData();
+      formData.append('name', name);
+      if (imageFile) formData.append('imageFile', imageFile);
+      else if (imageUrl.trim()) formData.append('imageUrl', imageUrl.trim());
+      if (storeName.trim()) formData.append('storeName', storeName.trim());
+      if (storeLink.trim()) formData.append('storeLink', storeLink.trim());
 
-      if (editingId) {
-        await updateProduct(editingId, formData)
-      } else {
-        await createProduct(formData)
-      }
-      resetForm()
-      await load()
+      if (editingId) await updateProduct(editingId, formData);
+      else await createProduct(formData);
+
+      resetForm();
+      await load();
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const startEdit = (p: Product) => {
-    setEditingId(p._id)
-    setName(p.name)
-    setImageUrl(p.image)
-    setStoreName(p.storeName || '')
-    setStoreLink(p.storeLink || '')
-    setImageFile(null)
-  }
+    setEditingId(p._id);
+    setName(p.name);
+    setImageUrl(p.image);
+    setStoreName(p.storeName || '');
+    setStoreLink(p.storeLink || '');
+    setImageFile(null);
+
+    // Scroll del contenedor interno al top
+    setTimeout(() => {
+      containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
+  };
 
   const handleDelete = async (id: string) => {
-    setActionLoading(prev => ({ ...prev, [id]: true }))
+    setActionLoading(prev => ({ ...prev, [id]: true }));
     try {
-      await deleteProduct(id)
-      await load()
+      await deleteProduct(id);
+      await load();
     } finally {
-      setActionLoading(prev => ({ ...prev, [id]: false }))
+      setActionLoading(prev => ({ ...prev, [id]: false }));
     }
-  }
+  };
 
   return (
     <div className="flex flex-col h-[100dvh] text-white">
-      <div className="flex-1 overflow-y-auto max-w-3xl mx-auto p-6 space-y-6">
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-y-auto max-w-3xl mx-auto p-6 space-y-6"
+      >
         <Link href="/" className="text-gray-400 hover:underline">
           ← Volver al Home
         </Link>
@@ -105,8 +111,6 @@ export default function AdminFoodPage() {
             required
           />
 
-          
-
           <input
             value={storeName}
             onChange={e => setStoreName(e.target.value)}
@@ -120,8 +124,8 @@ export default function AdminFoodPage() {
             className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white"
           />
 
-<div className="flex flex-col gap-4">
-            <label className="">
+          <div className="flex flex-col gap-4">
+            <label>
               <span className="block text-sm mb-1">Subir imagen</span>
               <input
                 type="file"
@@ -130,8 +134,8 @@ export default function AdminFoodPage() {
                 className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white"
               />
             </label>
-            <label className="">
-              <span className="block text-sm mb-1">O usar URL de imágen</span>
+            <label>
+              <span className="block text-sm mb-1">O usar URL de imagen</span>
               <input
                 value={imageUrl}
                 onChange={e => setImageUrl(e.target.value)}
@@ -166,7 +170,9 @@ export default function AdminFoodPage() {
               {items.map(p => (
                 <li
                   key={p._id}
-                  className="flex justify-between items-center bg-gray-800 rounded-lg p-4 shadow-lg"
+                  className={`flex justify-between items-center bg-gray-800 rounded-lg p-4 shadow-lg ${
+                    editingId === p._id ? 'ring-2 ring-purple-500' : ''
+                  }`}
                 >
                   <div className="flex items-center gap-4">
                     <img
@@ -214,5 +220,5 @@ export default function AdminFoodPage() {
         </section>
       </div>
     </div>
-  )
+  );
 }
