@@ -6,7 +6,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiSearch, FiCheck, FiPlus, FiFilter } from 'react-icons/fi';
 import { Icon } from '@iconify/react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { getProducts, toggleProductBought, updateProduct } from '@/services/api';
 import type { Product } from '@/types';
 import { Spinner } from '@/app/spinner';
@@ -38,11 +38,12 @@ export default function FoodPage() {
   const [search, setSearch]             = useState('');
   const searchRef = useRef<NodeJS.Timeout|null>(null);
 
-  const [togBought, setTogBought] = useState<Record<string,boolean>>({});
-  const [togHeart,  setTogHeart]  = useState<Record<string,boolean>>({});
-  const [pickerId,  setPickerId]  = useState<string|null>(null);
+  const [togBought, setTogBought]       = useState<Record<string,boolean>>({});
+  const [togHeart, setTogHeart]         = useState<Record<string,boolean>>({});
+  const [pickerId, setPickerId]         = useState<string|null>(null);
 
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters]         = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product|null>(null);
 
   useEffect(() => {
     getProducts().then(data => {
@@ -63,18 +64,25 @@ export default function FoodPage() {
 
   const handleLike = async (p: Product, who: 'Barbara' | 'Nico') => {
     setTogHeart(t => ({ ...t, [p._id]: true }));
+    // Optimistic UI update
     setItems(old => old.map(x => {
       if (x._id !== p._id) return x;
       return {
         ...x,
         likeBarbara: who === 'Barbara' ? !x.likeBarbara : x.likeBarbara,
         likeNico:    who === 'Nico'     ? !x.likeNico     : x.likeNico,
+        likeBoth:    (who === 'Barbara' ? !x.likeBarbara : x.likeBarbara)
+                   && (who === 'Nico'     ? !x.likeNico     : x.likeNico),
       };
     }));
-    const body = who === 'Barbara'
-      ? { likeBarbara: !p.likeBarbara }
-      : { likeNico:     !p.likeNico };
-    const upd = await updateProduct(p._id, body);
+    // Prepare FormData
+    const formData = new FormData();
+    formData.append(
+      who === 'Barbara' ? 'likeBarbara' : 'likeNico',
+      (!(who === 'Barbara' ? p.likeBarbara : p.likeNico)).toString()
+    );
+    // Send to backend
+    const upd = await updateProduct(p._id, formData);
     refreshItem(upd);
     setTogHeart(t => ({ ...t, [p._id]: false }));
     setPickerId(null);
@@ -83,7 +91,7 @@ export default function FoodPage() {
   const onSearchChange = (v: string) => {
     setRawSearch(v);
     if (searchRef.current) clearTimeout(searchRef.current);
-    searchRef.current = setTimeout(() => setSearch(v), 300);
+    searchRef.current = setTimeout(() => setSearch(v.trim()), 300);
   };
 
   const visible = useMemo(() => items
@@ -99,6 +107,12 @@ export default function FoodPage() {
       return true;
     })
   , [items, statusFilter, heartFilter, search]);
+
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (info.offset.y > 100) {
+      setSelectedProduct(null);
+    }
+  };
 
   return (
     <div className="bg-gray-900 text-white flex flex-col min-h-screen">
@@ -122,7 +136,7 @@ export default function FoodPage() {
         </button>
       </header>
 
-      {/* Productos */}
+      {/* Product grid */}
       <main className="flex-1 overflow-y-auto p-4 pb-20">
         {loading ? (
           <div className="w-full h-[70dvh] flex items-center justify-center">
@@ -143,30 +157,27 @@ export default function FoodPage() {
                 return (
                   <motion.div
                     key={p._id}
-                    className={`relative group bg-gray-800 rounded-xl overflow-hidden shadow-lg ${p.bought ? 'bg-transparent shadow-none border border-dashed border-white/20' : ''}`}
+                    onClick={() => setSelectedProduct(p)}
+                    className={`
+                      relative bg-gray-800 rounded-xl overflow-hidden shadow-lg cursor-pointer
+                      ${p.bought ? 'bg-transparent shadow-none border border-dashed border-white/20' : ''}
+                    `}
                     variants={itemVariants}
-                    initial="hidden"
-                    animate="show"
-                    exit="exit"
                   >
-                    {/* Imagen con filtro cuando está comprado */}
                     <img
                       src={p.image}
                       alt={p.name}
                       className={`
-                        h-[147px] w-full object-cover
-                        transition-all duration-200
+                        h-[147px] w-full object-cover transition-all duration-200
                         ${p.bought ? 'filter grayscale' : ''}
                       `}
                     />
 
-                    {/* Overlay de acciones */}
-                    <div className="absolute inset-0 flex justify-end items-start p-2
-                                    opacity-0 group-hover:opacity-100 transition-opacity duration-200
-                                    pointer-events-none group-hover:pointer-events-auto">
+                    {/* Always visible actions */}
+                    <div className="absolute inset-0 flex justify-end items-start p-2 pointer-events-auto">
                       <div className="flex flex-col items-end space-y-2">
                         <button
-                          onClick={() => handleBought(p)}
+                          onClick={e => { e.stopPropagation(); handleBought(p); }}
                           disabled={togBought[p._id]}
                           className={`p-2 rounded-full ${
                             p.bought ? 'bg-green-500' : 'bg-gray-700 hover:bg-gray-600'
@@ -180,9 +191,7 @@ export default function FoodPage() {
                         {both ? (
                           <div className="relative">
                             <button
-                              onClick={() =>
-                                setPickerId(pid => pid === p._id ? null : p._id)
-                              }
+                              onClick={e => { e.stopPropagation(); setPickerId(pid => pid === p._id ? null : p._id); }}
                               className="p-2 bg-gray-700 rounded-full hover:bg-gray-600"
                             >
                               <Icon icon="fluent-emoji:revolving-hearts" width="24" height="24" />
@@ -209,7 +218,7 @@ export default function FoodPage() {
                         ) : (
                           <div className="flex flex-col items-center space-y-2">
                             <button
-                              onClick={() => handleLike(p, 'Barbara')}
+                              onClick={e => { e.stopPropagation(); handleLike(p, 'Barbara'); }}
                               disabled={togHeart[p._id]}
                               className="p-2 bg-gray-700 rounded-full hover:bg-gray-600"
                             >
@@ -220,7 +229,7 @@ export default function FoodPage() {
                               />
                             </button>
                             <button
-                              onClick={() => handleLike(p, 'Nico')}
+                              onClick={e => { e.stopPropagation(); handleLike(p, 'Nico'); }}
                               disabled={togHeart[p._id]}
                               className="p-2 bg-gray-700 rounded-full hover:bg-gray-600"
                             >
@@ -236,9 +245,7 @@ export default function FoodPage() {
                     </div>
 
                     <div className="p-3">
-                      <h3 className={`font-semibold text-lg ${
-                        p.bought ? 'line-through text-gray-500' : ''
-                      }`}>
+                      <h3 className={`font-semibold text-lg ${p.bought ? 'line-through text-gray-500' : ''}`}>
                         {p.name}
                       </h3>
                     </div>
@@ -249,6 +256,77 @@ export default function FoodPage() {
           </motion.div>
         )}
       </main>
+
+      {/* Bottom drawer detail */}
+      <AnimatePresence>
+        {selectedProduct && (
+          <motion.div
+            className="fixed inset-0 z-50 flex justify-center items-end"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedProduct(null)} />
+            <motion.div
+              className="relative w-full max-h-[80dvh] bg-gradient-to-br from-gray-800  to-gray-900 rounded-t-3xl p-6 overflow-y-auto"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              onDragEnd={handleDragEnd}
+              transition={{ type: 'tween' }}
+            >
+              <div className="w-10 h-1 bg-gray-600 rounded mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2">{selectedProduct.name}</h2>
+              <img
+                src={selectedProduct.image}
+                alt={selectedProduct.name}
+                className="w-full h-full object-cover rounded mb-4"
+              />
+              {selectedProduct.storeName && (
+                <a
+                  href={selectedProduct.storeLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-400 hover:underline mb-2 block"
+                >
+                  {selectedProduct.storeName}
+                </a>
+              )}
+              <p><strong>Estado:</strong> {selectedProduct.bought ? 'Comprado' : 'Pendiente'}</p>
+
+              {/* horizontal like buttons */}
+              <div className="flex mt-4 items-center space-x-10">
+                <button
+                  onClick={() => handleLike(selectedProduct, 'Barbara')}
+                  disabled={togHeart[selectedProduct._id]}
+                  className="flex flex-col items-center"
+                >
+                  <Icon
+                    icon="fluent-emoji:pink-heart"
+                    width="32" height="32"
+                    className={selectedProduct.likeBarbara ? 'text-pink-400' : 'opacity-50'}
+                  />
+                  <span className="text-xs mt-1">Bárbara</span>
+                </button>
+                <button
+                  onClick={() => handleLike(selectedProduct, 'Nico')}
+                  disabled={togHeart[selectedProduct._id]}
+                  className="flex flex-col items-center"
+                >
+                  <Icon
+                    icon="fluent-emoji:light-blue-heart"
+                    width="32" height="32"
+                    className={selectedProduct.likeNico ? 'text-white' : 'opacity-50'}
+                  />
+                  <span className="text-xs mt-1">Nico</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* FAB Admin */}
       <button
@@ -269,7 +347,7 @@ export default function FoodPage() {
       <AnimatePresence>
         {showFilters && (
           <motion.div
-            className="fixed inset-0 z-30 bg-black bg-opacity-50 flex items-end"
+            className="fixed inset-0 z-40 bg-black bg-opacity-50 flex items-end"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -295,7 +373,7 @@ export default function FoodPage() {
                     }`}
                   >
                     {f === 'pending' ? 'Pendientes'
-                      : f === 'bought'  ? 'Comprados'
+                      : f === 'bought' ? 'Comprados'
                       : 'Todos'}
                   </button>
                 ))}
@@ -330,6 +408,7 @@ export default function FoodPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
     </div>
   );
 }

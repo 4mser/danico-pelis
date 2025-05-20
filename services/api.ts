@@ -1,5 +1,5 @@
 // src/services/api.ts
-import axios from 'axios';
+import axios from 'axios'
 import type {
   AppMovie,
   Coupon,
@@ -8,30 +8,31 @@ import type {
   TMDBMovie,
   InteractionType,
   Pet,
-} from '@/types';
+} from '@/types'
 
-export const API_URL = 'https://pelis-danico-production.up.railway.app';
+export const API_URL = 'https://pelis-danico-production.up.railway.app'
+// export const API_URL = 'http://localhost:3000'
 
 /** ——— Mascota ——— */
 export const getPet = async (): Promise<Pet> => {
-  const res = await axios.get<Pet>(`${API_URL}/pets`);
-  return res.data;
-};
+  const res = await axios.get<Pet>(`${API_URL}/pets`)
+  return res.data
+}
 export const interactWithPet = async (
   type: InteractionType,
 ): Promise<Pet> => {
-  const res = await axios.post<Pet>(`${API_URL}/pets/interact/${type}`);
-  return res.data;
-};
+  const res = await axios.post<Pet>(`${API_URL}/pets/interact/${type}`)
+  return res.data
+}
 
 /** ——— Películas ——— */
 export const searchMovies = async (query: string): Promise<TMDBMovie[]> => {
   const res = await axios.get<TMDBMovie[]>(
     `${API_URL}/tmdb/search`,
     { params: { query } },
-  );
-  return res.data;
-};
+  )
+  return res.data
+}
 export const addMovieToList = async (
   movie: TMDBMovie,
   list: ListType,
@@ -41,28 +42,28 @@ export const addMovieToList = async (
     apiId: movie.id.toString(),
     list,
     poster: movie.poster ?? null,
-  });
-  await interactWithPet('addMovie');
-};
+  })
+  await interactWithPet('addMovie')
+}
 export const getMoviesByList = async (
   list: ListType,
 ): Promise<AppMovie[]> => {
-  const res = await axios.get<AppMovie[]>(`${API_URL}/movies/${list}`);
-  return res.data;
-};
+  const res = await axios.get<AppMovie[]>(`${API_URL}/movies/${list}`)
+  return res.data
+}
 export const toggleWatched = async (
   id: string,
   watched: boolean,
 ): Promise<void> => {
-  await axios.patch(`${API_URL}/movies/${id}/watched`, { watched: !watched });
+  await axios.patch(`${API_URL}/movies/${id}/watched`, { watched: !watched })
   if (!watched) {
-    await interactWithPet('markWatched');
+    await interactWithPet('markWatched')
   }
-};
+}
 export const deleteMovie = async (id: string): Promise<void> => {
-  await axios.delete(`${API_URL}/movies/${id}`);
-  await interactWithPet('deleteMovie');
-};
+  await axios.delete(`${API_URL}/movies/${id}`)
+  await interactWithPet('deleteMovie')
+}
 
 /** ——— Cupones ——— */
 export const getCoupons = async (
@@ -70,27 +71,22 @@ export const getCoupons = async (
 ): Promise<Coupon[]> => {
   const res = await axios.get<Coupon[]>(`${API_URL}/coupons`, {
     params: owner ? { owner } : {},
-  });
-  return res.data;
-};
-
-/**
- * Ahora recibe expirationDate opcional (ISO string).
- */
+  })
+  return res.data
+}
 export const createCoupon = async (
   title: string,
   description: string,
   owner: 'Nico' | 'Barbara',
   reusable: boolean,
-  expirationDate?: string,      // ← nuevo parámetro opcional
+  expirationDate?: string,
 ): Promise<Coupon> => {
-  const body: Record<string, any> = { title, description, owner, reusable };
-  if (expirationDate) body.expirationDate = expirationDate;
-  const res = await axios.post<Coupon>(`${API_URL}/coupons`, body);
-  await interactWithPet('addCoupon');
-  return res.data;
-};
-
+  const body: Record<string, any> = { title, description, owner, reusable }
+  if (expirationDate) body.expirationDate = expirationDate
+  const res = await axios.post<Coupon>(`${API_URL}/coupons`, body)
+  await interactWithPet('addCoupon')
+  return res.data
+}
 export const redeemCoupon = async (
   id: string,
   redeemed: boolean,
@@ -98,69 +94,107 @@ export const redeemCoupon = async (
   const res = await axios.patch<Coupon | { deleted: true }>(
     `${API_URL}/coupons/${id}/redeem`,
     { redeemed },
-  );
-  if (redeemed) await interactWithPet('redeemCoupon');
-  return res.data;
-};
-
+  )
+  if (redeemed) await interactWithPet('redeemCoupon')
+  return res.data
+}
 export const deleteCoupon = async (id: string): Promise<void> => {
-  await axios.delete(`${API_URL}/coupons/${id}`);
-};
+  await axios.delete(`${API_URL}/coupons/${id}`)
+}
 
 /** ——— Productos ——— */
 export const getProducts = async (): Promise<Product[]> => {
-  const res = await axios.get<Product[]>(`${API_URL}/products`);
-  return res.data;
-};
-export const createProduct = async (
-  name: string,
-  image?: string,
-): Promise<Product> => {
-  const res = await axios.post<Product>(`${API_URL}/products`, {
-    name,
-    image,
-  });
-  await interactWithPet('addProduct');
-  return res.data;
-};
+  const res = await axios.get<Product[]>(`${API_URL}/products`)
+  return res.data
+}
+
 export const getProductById = async (id: string): Promise<Product> => {
-  const res = await axios.get<Product>(`${API_URL}/products/${id}`);
-  return res.data;
-};
+  const res = await axios.get<Product>(`${API_URL}/products/${id}`)
+  return res.data
+}
+
+/**
+ * Crea un producto usando FormData:
+ * - imageFile (archivo) O imageUrl (string)
+ * - storeName?, storeLink?
+ */
+export const createProduct = async (formData: FormData): Promise<Product> => {
+  try {
+    const res = await axios.post<Product>(
+      `${API_URL}/products`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+    await interactWithPet('addProduct')
+    return res.data
+  } catch (err) {
+    console.error('Error creando producto:', err)
+    throw err
+  }
+}
+
+/**
+ * Actualiza un producto: acepta FormData igual que createProduct.
+ */
 export const updateProduct = async (
   id: string,
-  data: Partial<{
-    name: string;
-    image: string;
-    bought: boolean;
-    likeNico: boolean;
-    likeBarbara: boolean;
-  }>,
+  formData: FormData,
 ): Promise<Product> => {
-  const before = await getProductById(id);
-  const res = await axios.patch<Product>(`${API_URL}/products/${id}`, data);
-  const after = res.data;
-  if (data.bought === true && !before.bought) {
-    await interactWithPet('buyProduct');
+  const before = await getProductById(id)
+  try {
+    const res = await axios.patch<Product>(
+      `${API_URL}/products/${id}`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+    const after = res.data
+
+    if (!before.bought && after.bought) {
+      await interactWithPet('buyProduct')
+    }
+    const likedOneNow =
+      ((after.likeNico && !before.likeNico) ||
+       (after.likeBarbara && !before.likeBarbara)) &&
+      !after.likeBoth
+    if (likedOneNow) {
+      await interactWithPet('likeOne')
+    }
+    if (!before.likeBoth && after.likeBoth) {
+      await interactWithPet('likeBoth')
+    }
+
+    return after
+  } catch (err) {
+    console.error('Error actualizando producto:', err)
+    throw err
   }
-  const likedOneNow =
-    ((data.likeNico && !before.likeNico) ||
-      (data.likeBarbara && !before.likeBarbara)) &&
-    !after.likeBoth;
-  if (likedOneNow) {
-    await interactWithPet('likeOne');
-  }
-  if (!before.likeBoth && after.likeBoth) {
-    await interactWithPet('likeBoth');
-  }
-  return after;
-};
+}
+
+/**
+ * Togglear solo la propiedad 'bought' con JSON simple
+ */
 export const toggleProductBought = async (
   id: string,
   currentBought: boolean,
 ): Promise<Product> => {
-  return updateProduct(id, { bought: !currentBought });
-};
+  const before = await getProductById(id)
+  const res = await axios.patch<Product>(
+    `${API_URL}/products/${id}`,
+    { bought: !currentBought }
+  )
+  const after = res.data
+  if (!before.bought && after.bought) {
+    await interactWithPet('buyProduct')
+  }
+  return after
+}
+
+/**
+ * Borra un producto
+ */
 export const deleteProduct = async (id: string): Promise<void> => {
-  await axios.delete(`${API_URL}/products/${id}`);
-};
+  await axios.delete(`${API_URL}/products/${id}`)
+  await interactWithPet('deleteProduct')
+}
+
+// — resto de servicios (pet, movies, coupons) permanece igual —

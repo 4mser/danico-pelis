@@ -35,14 +35,14 @@ export interface Product {
   likeNico: boolean;
   likeBarbara: boolean;
   likeBoth: boolean;
-
+  storeName?: string
+  storeLink?: string
 }
 
 
 /** Nuevos tipos para la mascota */
 
 
-/** Tipos para las interacciones que Rabanito maneja */
 /** Tipos para las interacciones que Rabanito maneja */
 export type InteractionType =
   | 'addMovie'
@@ -53,6 +53,7 @@ export type InteractionType =
   | 'likeOne'
   | 'likeBoth'
   | 'addCoupon'
+  | 'deleteProduct'  
   | 'redeemCoupon';
 
 /** Representación de la mascota en la DB y el frontend */

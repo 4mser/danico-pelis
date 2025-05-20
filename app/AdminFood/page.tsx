@@ -14,60 +14,79 @@ import { Product } from '@/types';
 import { Spinner } from '@/app/spinner';
 
 export default function AdminFoodPage() {
-  const [items, setItems] = useState<Product[]>([]);
-  const [name, setName] = useState('');
-  const [image, setImage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
+  const [items, setItems] = useState<Product[]>([])
+  const [name, setName] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [storeName, setStoreName] = useState('')
+  const [storeLink, setStoreLink] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({})
 
   const load = async () => {
-    try {
-      const data = await getProducts();
-      setItems(data);
-    } catch {
-      // opcional: setError
-    }
-  };
+    const data = await getProducts()
+    setItems(data)
+  }
 
   useEffect(() => {
-    load();
-  }, []);
+    load()
+  }, [])
+
+  const resetForm = () => {
+    setName('')
+    setImageUrl('')
+    setImageFile(null)
+    setStoreName('')
+    setStoreLink('')
+    setEditingId(null)
+  }
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !image.trim()) return;
-    setLoading(true);
+    e.preventDefault()
+    if (!name.trim()) return
+    setLoading(true)
     try {
-      if (editingId) {
-        await updateProduct(editingId, { name, image });
-        setEditingId(null);
-      } else {
-        await createProduct(name, image);
+      const formData = new FormData()
+      formData.append('name', name)
+      if (imageFile) {
+        formData.append('imageFile', imageFile)
+      } else if (imageUrl.trim()) {
+        formData.append('imageUrl', imageUrl.trim())
       }
-      setName('');
-      setImage('');
-      await load();
+      if (storeName.trim()) formData.append('storeName', storeName.trim())
+      if (storeLink.trim()) formData.append('storeLink', storeLink.trim())
+
+      if (editingId) {
+        await updateProduct(editingId, formData)
+      } else {
+        await createProduct(formData)
+      }
+      resetForm()
+      await load()
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const startEdit = (p: Product) => {
-    setEditingId(p._id);
-    setName(p.name);
-    setImage(p.image);
-  };
+    setEditingId(p._id)
+    setName(p.name)
+    setImageUrl(p.image)
+    setStoreName(p.storeName || '')
+    setStoreLink(p.storeLink || '')
+    setImageFile(null)
+  }
 
   const handleDelete = async (id: string) => {
-    setActionLoading(prev => ({ ...prev, [id]: true }));
+    setActionLoading(prev => ({ ...prev, [id]: true }))
     try {
-      await deleteProduct(id);
-      await load();
+      await deleteProduct(id)
+      await load()
     } finally {
-      setActionLoading(prev => ({ ...prev, [id]: false }));
+      setActionLoading(prev => ({ ...prev, [id]: false }))
     }
-  };
+  }
 
   return (
     <div className="flex flex-col h-[100dvh] text-white">
@@ -83,13 +102,44 @@ export default function AdminFoodPage() {
             onChange={e => setName(e.target.value)}
             placeholder="Nombre del producto"
             className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white"
+            required
           />
+
+          
+
           <input
-            value={image}
-            onChange={e => setImage(e.target.value)}
-            placeholder="URL de la imagen"
+            value={storeName}
+            onChange={e => setStoreName(e.target.value)}
+            placeholder="Nombre del local (opcional)"
             className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white"
           />
+          <input
+            value={storeLink}
+            onChange={e => setStoreLink(e.target.value)}
+            placeholder="Link de la tienda (opcional)"
+            className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white"
+          />
+
+<div className="flex flex-col gap-4">
+            <label className="">
+              <span className="block text-sm mb-1">Subir imagen</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={e => setImageFile(e.target.files?.[0] ?? null)}
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white"
+              />
+            </label>
+            <label className="">
+              <span className="block text-sm mb-1">O usar URL de imágen</span>
+              <input
+                value={imageUrl}
+                onChange={e => setImageUrl(e.target.value)}
+                placeholder="https://..."
+                className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-white"
+              />
+            </label>
+          </div>
           <button
             type="submit"
             disabled={loading}
@@ -124,26 +174,36 @@ export default function AdminFoodPage() {
                       alt={p.name}
                       className="w-16 h-16 object-cover rounded"
                     />
-                    <span className="font-medium">{p.name}</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{p.name}</span>
+                      {p.storeName && (
+                        <a
+                          href={p.storeLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-gray-400 hover:underline"
+                        >
+                          {p.storeName}
+                        </a>
+                      )}
+                    </div>
                   </div>
                   <div className="flex gap-3">
                     <button
                       onClick={() => startEdit(p)}
-                      className=" rounded-full  hover:text-blue-500 text-white text-sm flex items-center gap-1"
+                      className="rounded-full hover:text-blue-500 text-white text-sm flex items-center gap-1"
                     >
                       <FiEdit2 />
                     </button>
                     <button
                       onClick={() => handleDelete(p._id)}
                       disabled={actionLoading[p._id]}
-                      className=" rounded-full  text-red-500  text-sm flex items-center gap-1"
+                      className="rounded-full text-red-500 text-sm flex items-center gap-1"
                     >
                       {actionLoading[p._id] ? (
                         <Spinner size="sm" />
                       ) : (
-                        <>
-                          <FiTrash2 />
-                        </>
+                        <FiTrash2 />
                       )}
                     </button>
                   </div>
@@ -154,5 +214,5 @@ export default function AdminFoodPage() {
         </section>
       </div>
     </div>
-  );
+  )
 }
