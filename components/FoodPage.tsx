@@ -261,7 +261,7 @@ export default function FoodPage() {
       <AnimatePresence>
         {selectedProduct && (
           <motion.div
-            className="fixed inset-0 z-50 flex justify-center items-end"
+            className="fixed h-[100dvh]  z-50 flex justify-center items-end"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
