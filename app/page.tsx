@@ -13,19 +13,18 @@ export default function Page() {
   >('pelis');
 
   return (
-    <div className="flex flex-col h-[100dvh]">
+    <div className="flex flex-col h-[100dvh] justify-center items-center bg-black">
       {/* CONTENIDO */}
-      <div className="flex-1 overflow-y-auto">
+      {/* <div className="flex-1 overflow-y-auto">
         {section === 'pelis'   && <HomePage isHomeSection={true} />}
         {section === 'cupones' && <CouponsPage />}
         {section === 'comida'  && <FoodPage />}
         {section === 'bob'     && <RabanitoSection />}
         {section === 'mapa'     && <MapaPage />}
-      </div>
+      </div> */}
 
       {/* MENÚ INFERIOR */}
-      <nav className="h-16 bg-gray-900 border-t border-gray-700 flex">
-        {/* Pelis */}
+      {/* <nav className="h-16 bg-gray-900 border-t border-gray-700 flex">
         <button
           onClick={() => setSection('pelis')}
           className={`
@@ -39,7 +38,6 @@ export default function Page() {
           <span className="text-xs mt-1">Para ver</span>
         </button>
 
-        {/* Cupones */}
         <button
           onClick={() => setSection('cupones')}
           className={`
@@ -53,7 +51,6 @@ export default function Page() {
           <span className="text-xs mt-1">Cupones</span>
         </button>
 
-        {/* Comida */}
         <button
           onClick={() => setSection('comida')}
           className={`
@@ -67,7 +64,6 @@ export default function Page() {
           <span className="text-xs mt-1">Cosas Ricas</span>
         </button>
 
-        {/* Rabanito */}
         <button
           onClick={() => setSection('bob')}
           className={`
@@ -93,7 +89,8 @@ export default function Page() {
           <span className="text-2xl">📍</span>
           <span className="text-xs mt-1">Mapa</span>
         </button>
-      </nav>
+      </nav> */}
+      <img src="/maybe.jpg" alt="" />
     </div>
   );
 }
